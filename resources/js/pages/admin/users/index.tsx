@@ -1,16 +1,12 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AdminLayout from '@/layouts/admin-layout';
+import { filterAdminUsers, type AdminUserFilters, type AdminUserRow } from '@/lib/admin-user-filters';
 import type { Role } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
-
-type AdminUser = {
-    id: number;
-    name: string;
-    email: string;
-    role: Role;
-    created_at: string | null;
-};
+import { useEffect, useId, useMemo, useState } from 'react';
 
 const roleLabel: Record<Role, string> = {
     user: 'Gebruiker',
@@ -26,7 +22,7 @@ function formatDate(value: string | null): string {
     return dateFormat.format(new Date(year, month - 1, day));
 }
 
-function RoleSelect({ user }: { user: AdminUser }) {
+function RoleSelect({ user }: { user: AdminUserRow }) {
     const [role, setRole] = useState<Role>(user.role);
     const [pending, setPending] = useState(false);
 
@@ -62,17 +58,18 @@ function RoleSelect({ user }: { user: AdminUser }) {
     );
 }
 
-export default function AdminUsersIndex({ users, status }: { users: AdminUser[]; status?: string }) {
+export default function AdminUsersIndex({ users, status }: { users: AdminUserRow[]; status?: string }) {
+    const fieldId = useId();
     const { errors } = usePage().props as { errors?: Record<string, string> };
+    const [filters, setFilters] = useState<AdminUserFilters>({ search: '', role: '' });
+    const filteredUsers = useMemo(() => filterAdminUsers(users, filters), [users, filters]);
+    const hasFilters = Boolean(filters.search.trim() || filters.role);
 
     return (
         <AdminLayout title="Gebruikers">
             <div className="space-y-6">
-                <header className="space-y-2">
+                <header>
                     <h1 className="font-display text-3xl font-semibold tracking-tight">Gebruikers</h1>
-                    <p className="text-muted-foreground text-sm">
-                        {users.length} {users.length === 1 ? 'gebruiker' : 'gebruikers'}
-                    </p>
                 </header>
 
                 {status && (
@@ -86,6 +83,51 @@ export default function AdminUsersIndex({ users, status }: { users: AdminUser[];
                     </p>
                 )}
 
+                <div className="space-y-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor={`${fieldId}-search`}>Zoeken</Label>
+                            <Input
+                                id={`${fieldId}-search`}
+                                value={filters.search}
+                                onChange={(event) => setFilters({ ...filters, search: event.target.value })}
+                                placeholder="Naam of e-mail..."
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor={`${fieldId}-role`}>Rol</Label>
+                            <select
+                                id={`${fieldId}-role`}
+                                value={filters.role}
+                                onChange={(event) => setFilters({ ...filters, role: event.target.value as AdminUserFilters['role'] })}
+                                className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                            >
+                                <option value="">Alle rollen</option>
+                                <option value="user">{roleLabel.user}</option>
+                                <option value="admin">{roleLabel.admin}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm" role="status">
+                            <span className="font-semibold tabular-nums">{filteredUsers.length}</span>
+                            <span className="text-muted-foreground">
+                                {' '}
+                                van {users.length} {users.length === 1 ? 'gebruiker' : 'gebruikers'}
+                            </span>
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={!hasFilters}
+                            onClick={() => setFilters({ search: '', role: '' })}
+                        >
+                            Filters wissen
+                        </Button>
+                    </div>
+                </div>
+
                 <div className="bg-card overflow-hidden rounded-xl border">
                     <Table aria-label="Gebruikers">
                         <TableHeader>
@@ -97,14 +139,14 @@ export default function AdminUsersIndex({ users, status }: { users: AdminUser[];
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.length === 0 ? (
+                            {filteredUsers.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="text-muted-foreground h-24 text-center">
-                                        Nog geen gebruikers.
+                                        {users.length === 0 ? 'Nog geen gebruikers.' : 'Geen gebruikers gevonden.'}
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                users.map((user) => (
+                                filteredUsers.map((user) => (
                                     <TableRow key={user.id}>
                                         <TableCell className="font-medium">{user.name}</TableCell>
                                         <TableCell className="tabular-nums">{user.email}</TableCell>
