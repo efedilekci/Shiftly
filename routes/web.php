@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BaanController;
 use App\Http\Controllers\ClockController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HourEntryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -26,9 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/banen/{baan}', [BaanController::class, 'update'])->name('banen.update');
     Route::delete('/banen/{baan}', [BaanController::class, 'destroy'])->name('banen.destroy');
 
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 require __DIR__.'/settings.php';
