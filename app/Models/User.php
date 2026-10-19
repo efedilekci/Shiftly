@@ -35,6 +35,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function hourEntries(): HasMany
+    {
+        return $this->hasMany(HourEntry::class);
+    }
+
     public function banen(): HasMany
     {
         return $this->hasMany(Baan::class);
