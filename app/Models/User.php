@@ -25,6 +25,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'open_clock_reminder_after_minutes',
     ];
 
     /**
@@ -64,6 +65,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'open_clock_reminder_after_minutes' => 'integer',
         ];
     }
 }

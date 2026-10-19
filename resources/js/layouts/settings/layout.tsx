@@ -17,6 +17,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Klok',
+        url: '/settings/klok',
+        icon: null,
+    },
+    {
         title: 'Weergave',
         url: '/settings/appearance',
         icon: null,

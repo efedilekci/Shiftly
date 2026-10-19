@@ -21,11 +21,20 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export type SharedActiveClock = {
+    baan_name: string;
+    started_at: number;
+};
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     flash?: { status?: string | null };
+    activeClock: SharedActiveClock | null;
+    openClockReminderAfterMinutes: number;
+    serverNow: number;
+    timezone: string;
     [key: string]: unknown;
 }
 
