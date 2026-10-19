@@ -1,10 +1,13 @@
 import DashboardClockCard from '@/components/klok/dashboard-clock-card';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { type Baan } from '@/types/baan';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
@@ -60,6 +63,8 @@ type ActiveClock = { baan_name: string; started_at: number };
 
 type DashboardProps = {
     month: string;
+    previous_month: string;
+    next_month: string | null;
     month_entry_count: number;
     month_minutes: number;
     month_earnings_cents: number;
@@ -75,6 +80,8 @@ type DashboardProps = {
 
 export default function Dashboard({
     month,
+    previous_month,
+    next_month,
     month_entry_count,
     month_minutes,
     month_earnings_cents,
@@ -100,9 +107,33 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="mx-auto w-full max-w-6xl space-y-8 px-5 py-8 sm:p-10">
-                <header className="space-y-2">
-                    <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Welkom, {auth.user.name}.</h1>
-                    <p className="text-muted-foreground text-sm">Overzicht van {monthLabel}</p>
+                <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="space-y-2">
+                        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Welkom, {auth.user.name}.</h1>
+                        <p className="text-muted-foreground text-sm">Overzicht van je gewerkte uren</p>
+                    </div>
+
+                    <div className="flex items-center gap-1" role="group" aria-label="Maand kiezen">
+                        <Button variant="outline" size="icon" className="size-9" asChild>
+                            <Link href={route('dashboard', { month: previous_month })} prefetch aria-label="Vorige maand">
+                                <ChevronLeft className="size-4" />
+                            </Link>
+                        </Button>
+                        <p className="font-display min-w-40 text-center text-sm font-semibold tracking-tight capitalize tabular-nums sm:min-w-48 sm:text-base">
+                            {monthLabel}
+                        </p>
+                        {next_month ? (
+                            <Button variant="outline" size="icon" className="size-9" asChild>
+                                <Link href={route('dashboard', { month: next_month })} prefetch aria-label="Volgende maand">
+                                    <ChevronRight className="size-4" />
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button variant="outline" size="icon" className="size-9" disabled aria-label="Volgende maand">
+                                <ChevronRight className="size-4" />
+                            </Button>
+                        )}
+                    </div>
                 </header>
 
                 {status && (
@@ -142,7 +173,14 @@ export default function Dashboard({
 
                             <div className="absolute inset-0 flex items-end justify-between gap-3 px-1 sm:gap-4">
                                 {hours_chart.map((point) => (
-                                    <div key={point.month} className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end">
+                                    <Link
+                                        key={point.month}
+                                        href={route('dashboard', { month: point.month })}
+                                        prefetch
+                                        className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end outline-none"
+                                        aria-label={`${formatMonthLabel(point.month)}: ${formatDuration(point.minutes)}`}
+                                        aria-current={point.month === month ? 'true' : undefined}
+                                    >
                                         {point.hours > 0 && (
                                             <span
                                                 className="text-muted-foreground absolute text-[11px] tabular-nums"
@@ -152,13 +190,15 @@ export default function Dashboard({
                                             </span>
                                         )}
                                         <div
-                                            className="bg-foreground/80 w-2.5 rounded-t-sm sm:w-3"
+                                            className={cn(
+                                                'w-2.5 rounded-t-sm transition-colors sm:w-3',
+                                                point.month === month ? 'bg-foreground' : 'bg-foreground/55 hover:bg-foreground/80',
+                                            )}
                                             style={{
                                                 height: point.minutes > 0 ? `${Math.max(point.percent, 3)}%` : '0%',
                                             }}
-                                            title={`${formatShortMonth(point.month)}: ${formatDuration(point.minutes)}`}
                                         />
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         </div>
@@ -167,7 +207,10 @@ export default function Dashboard({
                             {hours_chart.map((point) => (
                                 <span
                                     key={point.month}
-                                    className="text-muted-foreground min-w-0 flex-1 text-center text-xs capitalize"
+                                    className={cn(
+                                        'min-w-0 flex-1 text-center text-xs capitalize',
+                                        point.month === month ? 'text-foreground font-medium' : 'text-muted-foreground',
+                                    )}
                                 >
                                     {formatShortMonth(point.month)}
                                 </span>
@@ -183,7 +226,7 @@ export default function Dashboard({
                     </CardHeader>
                     <CardContent>
                         {month_breakdown.length === 0 ? (
-                            <p className="text-muted-foreground text-sm">Nog geen uren deze maand.</p>
+                            <p className="text-muted-foreground text-sm">Nog geen uren in {monthLabel}.</p>
                         ) : (
                             <Table>
                                 <TableHeader>

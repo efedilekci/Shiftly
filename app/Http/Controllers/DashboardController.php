@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HourEntry;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -13,8 +14,10 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $monthStart = now()->startOfMonth()->toDateString();
-        $monthEnd = now()->endOfMonth()->toDateString();
+        $selectedMonth = $this->resolveMonth($request->query('month'));
+        $currentMonth = now()->startOfMonth();
+        $monthStart = $selectedMonth->toDateString();
+        $monthEnd = $selectedMonth->copy()->endOfMonth()->toDateString();
 
         $entries = $user->hourEntries()
             ->whereBetween('work_date', [$monthStart, $monthEnd])
@@ -50,9 +53,14 @@ class DashboardController extends Controller
             ->all();
 
         $clock = $user->runningClock()->first();
+        $monthKey = $selectedMonth->format('Y-m');
 
         return Inertia::render('dashboard', [
-            'month' => now()->format('Y-m'),
+            'month' => $monthKey,
+            'previous_month' => $selectedMonth->copy()->subMonthNoOverflow()->format('Y-m'),
+            'next_month' => $selectedMonth->lt($currentMonth)
+                ? $selectedMonth->copy()->addMonthNoOverflow()->format('Y-m')
+                : null,
             'month_entry_count' => $entries->count(),
             'month_minutes' => (int) $entries->sum('duration_minutes'),
             'month_earnings_cents' => (int) $entries->sum(fn (HourEntry $entry) => $entry->earningsCents()),
@@ -65,6 +73,19 @@ class DashboardController extends Controller
             'timezone' => config('app.timezone'),
             'status' => $request->session()->get('status'),
         ]);
+    }
+
+    private function resolveMonth(mixed $month): Carbon
+    {
+        $current = now()->startOfMonth();
+
+        if (! is_string($month) || ! preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month)) {
+            return $current->copy();
+        }
+
+        $selected = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfMonth();
+
+        return $selected->gt($current) ? $current->copy() : $selected;
     }
 
     /**

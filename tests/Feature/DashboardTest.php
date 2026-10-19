@@ -40,6 +40,8 @@ class DashboardTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dashboard')
                 ->where('month', '2026-10')
+                ->where('previous_month', '2026-09')
+                ->where('next_month', null)
                 ->where('month_entry_count', 0)
                 ->where('month_minutes', 0)
                 ->where('month_earnings_cents', 0)
@@ -50,6 +52,64 @@ class DashboardTest extends TestCase
                 ->where('hours_chart.5.hours', 0)
                 ->where('hours_chart.5.percent', 0)
                 ->where('recent_entries', []));
+    }
+
+    public function test_dashboard_can_show_totals_for_a_selected_month(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-19 12:00:00', 'Europe/Amsterdam'));
+
+        $user = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.50']);
+
+        $this->actingAs($user)->post('/uren', [
+            'baan_id' => $baan->id,
+            'work_date' => '2026-09-15',
+            'start_time' => '09:00',
+            'end_time' => '11:00',
+            'break_minutes' => 0,
+        ])->assertRedirect('/uren');
+
+        $this->actingAs($user)->post('/uren', [
+            'baan_id' => $baan->id,
+            'work_date' => '2026-10-05',
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'break_minutes' => 30,
+        ])->assertRedirect('/uren');
+
+        $this->actingAs($user)
+            ->get('/dashboard?month=2026-09')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('month', '2026-09')
+                ->where('previous_month', '2026-08')
+                ->where('next_month', '2026-10')
+                ->where('month_entry_count', 1)
+                ->where('month_minutes', 120)
+                ->where('month_earnings_cents', 3100)
+                ->has('month_breakdown', 1)
+                ->where('month_breakdown.0.baan_name', 'Winkel'));
+    }
+
+    public function test_dashboard_falls_back_to_the_current_month_for_invalid_or_future_months(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-19 12:00:00', 'Europe/Amsterdam'));
+
+        $this->actingAs(User::factory()->create())
+            ->get('/dashboard?month=not-a-month')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('month', '2026-10')
+                ->where('next_month', null));
+
+        $this->get('/dashboard?month=2026-11')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('month', '2026-10')
+                ->where('next_month', null));
     }
 
     public function test_dashboard_sums_only_this_months_entries_for_the_current_user(): void
