@@ -1,4 +1,5 @@
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
@@ -16,14 +17,28 @@ function formatDuration(minutes: number): string {
     return `${Math.floor(minutes / 60)}u ${String(minutes % 60).padStart(2, '0')}m`;
 }
 
+type MonthBreakdownRow = {
+    baan_name: string;
+    entry_count: number;
+    minutes: number;
+    earnings_cents: number;
+};
+
 type DashboardProps = {
     month: string;
     month_entry_count: number;
     month_minutes: number;
     month_earnings_cents: number;
+    month_breakdown: MonthBreakdownRow[];
 };
 
-export default function Dashboard({ month, month_entry_count, month_minutes, month_earnings_cents }: DashboardProps) {
+export default function Dashboard({
+    month,
+    month_entry_count,
+    month_minutes,
+    month_earnings_cents,
+    month_breakdown,
+}: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
     const monthLabel = formatMonthLabel(month);
 
@@ -52,6 +67,43 @@ export default function Dashboard({ month, month_entry_count, month_minutes, mon
                         </Card>
                     ))}
                 </section>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Per baan</CardTitle>
+                        <CardDescription>Verdeling van {monthLabel}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {month_breakdown.length === 0 ? (
+                            <p className="text-muted-foreground text-sm">Nog geen uren deze maand.</p>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Baan</TableHead>
+                                        <TableHead className="text-right">Registraties</TableHead>
+                                        <TableHead className="text-right">Gewerkt</TableHead>
+                                        <TableHead className="text-right">Verdiensten</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {month_breakdown.map((row) => (
+                                        <TableRow key={row.baan_name}>
+                                            <TableCell className="max-w-xs font-medium [overflow-wrap:anywhere] whitespace-normal">
+                                                {row.baan_name}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">{row.entry_count}</TableCell>
+                                            <TableCell className="text-right tabular-nums">{formatDuration(row.minutes)}</TableCell>
+                                            <TableCell className="text-right font-medium tabular-nums">
+                                                {currency.format(row.earnings_cents / 100)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
     );

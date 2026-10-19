@@ -42,7 +42,8 @@ class DashboardTest extends TestCase
                 ->where('month', '2026-10')
                 ->where('month_entry_count', 0)
                 ->where('month_minutes', 0)
-                ->where('month_earnings_cents', 0));
+                ->where('month_earnings_cents', 0)
+                ->where('month_breakdown', []));
     }
 
     public function test_dashboard_sums_only_this_months_entries_for_the_current_user(): void
@@ -97,6 +98,49 @@ class DashboardTest extends TestCase
                 ->where('month', '2026-10')
                 ->where('month_entry_count', 2)
                 ->where('month_minutes', 570)
-                ->where('month_earnings_cents', 14725));
+                ->where('month_earnings_cents', 14725)
+                ->has('month_breakdown', 1)
+                ->where('month_breakdown.0.baan_name', 'Winkel')
+                ->where('month_breakdown.0.entry_count', 2)
+                ->where('month_breakdown.0.minutes', 570)
+                ->where('month_breakdown.0.earnings_cents', 14725));
+    }
+
+    public function test_dashboard_breaks_down_month_totals_per_job(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-19 12:00:00', 'Europe/Amsterdam'));
+
+        $user = User::factory()->create();
+        $winkel = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.50']);
+        $bakkerij = $user->banen()->create(['name' => 'Bakkerij', 'hourly_wage' => '20.00']);
+
+        $this->actingAs($user)->post('/uren', [
+            'baan_id' => $winkel->id,
+            'work_date' => '2026-10-05',
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'break_minutes' => 30,
+        ])->assertRedirect('/uren');
+
+        $this->actingAs($user)->post('/uren', [
+            'baan_id' => $bakkerij->id,
+            'work_date' => '2026-10-06',
+            'start_time' => '09:00',
+            'end_time' => '11:00',
+            'break_minutes' => 0,
+        ])->assertRedirect('/uren');
+
+        // Highest earnings first: Winkel 11625, then Bakkerij 4000.
+        $this->get('/dashboard')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->has('month_breakdown', 2)
+                ->where('month_breakdown.0.baan_name', 'Winkel')
+                ->where('month_breakdown.0.minutes', 450)
+                ->where('month_breakdown.0.earnings_cents', 11625)
+                ->where('month_breakdown.1.baan_name', 'Bakkerij')
+                ->where('month_breakdown.1.minutes', 120)
+                ->where('month_breakdown.1.earnings_cents', 4000));
     }
 }
