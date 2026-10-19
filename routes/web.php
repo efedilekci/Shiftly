@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BaanController;
+use App\Http\Controllers\ClockController;
 use App\Http\Controllers\HourEntryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -10,6 +11,11 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/klok', [ClockController::class, 'index'])->name('clock.index');
+    Route::post('/klok/in', [ClockController::class, 'start'])->name('clock.start');
+    Route::post('/klok/uit', [ClockController::class, 'stop'])->name('clock.stop');
+    Route::delete('/klok', [ClockController::class, 'cancel'])->name('clock.cancel');
+
     Route::get('/uren', [HourEntryController::class, 'index'])->name('uren.index');
     Route::post('/uren', [HourEntryController::class, 'store'])->name('uren.store');
     Route::put('/uren/{hourEntry}', [HourEntryController::class, 'update'])->name('uren.update');
