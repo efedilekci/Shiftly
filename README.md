@@ -30,7 +30,7 @@ Tests gebruiken een tijdelijke SQLite-database in het geheugen. De applicatie ge
 - [x] Laravel met React en Inertia opzetten
 - [x] MySQL-configuratie voorbereiden
 - [x] Registreren, inloggen en een afgeschermd dashboard via de startbasis
-- [ ] Lokale MySQL-verbinding en migraties controleren
+- [x] Lokale MySQL-verbinding en migraties controleren
 - [ ] Eigen vormgeving en mobiele navigatie
 - [ ] Banen met uurloon beheren
 - [ ] Uren invoeren, wijzigen en verwijderen
@@ -46,3 +46,4 @@ We bouwen één onderdeel per sessie en maken commits voor afgeronde wijzigingen
 Het idee is gebaseerd op [ED-MBO/vibecheck](https://github.com/ED-MBO/vibecheck). De bestaande applicatiecode wordt niet overgenomen.
 
 De technische basis en authenticatie komen uit de officiële [Laravel React starter kit v1.0.1](https://github.com/laravel/react-starter-kit/tree/v1.0.1), onder de MIT-licentie. De urenregistratie en eigen vormgeving worden hier stap voor stap bovenop gebouwd.
+
