@@ -1,4 +1,5 @@
 import BaanDialog from '@/components/banen/baan-dialog';
+import DeleteBaanDialog from '@/components/banen/delete-baan-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -48,7 +49,12 @@ const columns = columnHelper.columns([
         id: 'actions',
         header: () => <span className="sr-only">Acties</span>,
         enableSorting: false,
-        cell: ({ row }) => <BaanDialog baan={row.original} />,
+        cell: ({ row }) => (
+            <div className="flex items-center justify-end gap-1">
+                <BaanDialog baan={row.original} />
+                <DeleteBaanDialog baan={row.original} />
+            </div>
+        ),
     }),
 ]);
 
@@ -65,11 +71,11 @@ export default function BanenDataTable({ banen }: { banen: Baan[] }) {
                 onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
             />
             <div className="bg-card overflow-hidden rounded-xl border">
-                <Table aria-label="Mijn banen" className="table-fixed">
+                <Table aria-label="Mijn banen" className="min-w-[26rem] table-fixed">
                     <colgroup>
                         <col />
-                        <col className="w-36" />
-                        <col className="w-16" />
+                        <col className="w-28 sm:w-36" />
+                        <col className="w-28" />
                     </colgroup>
                     <TableHeader>
                         {table.getHeaderGroups().map((group) => (

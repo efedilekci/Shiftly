@@ -33,4 +33,13 @@ class BaanController extends Controller
 
         return to_route('banen.index')->with('status', 'Baan bijgewerkt.');
     }
+
+    public function destroy(Request $request, Baan $baan): RedirectResponse
+    {
+        abort_unless($baan->user_id === $request->user()->id, 403);
+
+        $baan->delete();
+
+        return to_route('banen.index')->with('status', 'Baan verwijderd.');
+    }
 }

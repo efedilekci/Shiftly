@@ -160,4 +160,44 @@ class BaanTest extends TestCase
             'hourly_wage' => '15.00',
         ])->assertNotFound();
     }
+
+    public function test_users_can_delete_their_own_job_without_deleting_other_jobs(): void
+    {
+        $user = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+        $ownOtherJob = $user->banen()->create(['name' => 'Bakkerij', 'hourly_wage' => '17.00']);
+        $otherJob = User::factory()->create()->banen()->create(['name' => 'Zorg', 'hourly_wage' => '20.00']);
+
+        $this->actingAs($user)->delete(route('banen.destroy', $baan))
+            ->assertRedirect('/banen')->assertSessionHas('status', 'Baan verwijderd.');
+
+        $this->assertModelMissing($baan);
+        $this->assertModelExists($ownOtherJob);
+        $this->assertModelExists($otherJob);
+        $this->assertDatabaseCount('banen', 2);
+    }
+
+    public function test_users_cannot_delete_another_users_job(): void
+    {
+        $baan = User::factory()->create()->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+
+        $this->actingAs(User::factory()->create())->delete(route('banen.destroy', $baan))
+            ->assertForbidden();
+
+        $this->assertModelExists($baan);
+    }
+
+    public function test_guests_cannot_delete_jobs(): void
+    {
+        $baan = User::factory()->create()->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+
+        $this->delete(route('banen.destroy', $baan))->assertRedirect('/login');
+
+        $this->assertModelExists($baan);
+    }
+
+    public function test_deleting_a_missing_job_returns_not_found(): void
+    {
+        $this->actingAs(User::factory()->create())->delete('/banen/999999')->assertNotFound();
+    }
 }
