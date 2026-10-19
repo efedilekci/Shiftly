@@ -13,6 +13,12 @@ function formatMonthLabel(month: string): string {
     return new Intl.DateTimeFormat('nl-NL', { month: 'long', year: 'numeric' }).format(new Date(year, monthNumber - 1, 1));
 }
 
+function formatShortMonth(month: string): string {
+    const [year, monthNumber] = month.split('-').map(Number);
+
+    return new Intl.DateTimeFormat('nl-NL', { month: 'short' }).format(new Date(year, monthNumber - 1, 1));
+}
+
 function formatDuration(minutes: number): string {
     return `${Math.floor(minutes / 60)}u ${String(minutes % 60).padStart(2, '0')}m`;
 }
@@ -24,12 +30,20 @@ type MonthBreakdownRow = {
     earnings_cents: number;
 };
 
+type HoursChartPoint = {
+    month: string;
+    minutes: number;
+    hours: number;
+    percent: number;
+};
+
 type DashboardProps = {
     month: string;
     month_entry_count: number;
     month_minutes: number;
     month_earnings_cents: number;
     month_breakdown: MonthBreakdownRow[];
+    hours_chart: HoursChartPoint[];
 };
 
 export default function Dashboard({
@@ -38,6 +52,7 @@ export default function Dashboard({
     month_minutes,
     month_earnings_cents,
     month_breakdown,
+    hours_chart,
 }: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
     const monthLabel = formatMonthLabel(month);
@@ -67,6 +82,55 @@ export default function Dashboard({
                         </Card>
                     ))}
                 </section>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Uren per maand</CardTitle>
+                        <CardDescription>Laatste 6 maanden</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div aria-label="Uren per maand grafiek" className="relative h-44" role="img">
+                            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+                                {[0, 1, 2, 3].map((line) => (
+                                    <div key={line} className="border-border/60 border-t" />
+                                ))}
+                            </div>
+
+                            <div className="absolute inset-0 flex items-end justify-between gap-3 px-1 sm:gap-4">
+                                {hours_chart.map((point) => (
+                                    <div key={point.month} className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end">
+                                        {point.hours > 0 && (
+                                            <span
+                                                className="text-muted-foreground absolute text-[11px] tabular-nums"
+                                                style={{ bottom: `calc(${point.percent}% + 0.4rem)` }}
+                                            >
+                                                {point.hours.toLocaleString('nl-NL', { maximumFractionDigits: 1 })}
+                                            </span>
+                                        )}
+                                        <div
+                                            className="bg-foreground/80 w-2.5 rounded-t-sm sm:w-3"
+                                            style={{
+                                                height: point.minutes > 0 ? `${Math.max(point.percent, 3)}%` : '0%',
+                                            }}
+                                            title={`${formatShortMonth(point.month)}: ${formatDuration(point.minutes)}`}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between gap-3 px-1 sm:gap-4">
+                            {hours_chart.map((point) => (
+                                <span
+                                    key={point.month}
+                                    className="text-muted-foreground min-w-0 flex-1 text-center text-xs capitalize"
+                                >
+                                    {formatShortMonth(point.month)}
+                                </span>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader>

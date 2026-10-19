@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HourEntry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -11,10 +12,11 @@ class DashboardController extends Controller
 {
     public function index(Request $request): Response
     {
+        $user = $request->user();
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
 
-        $entries = $request->user()->hourEntries()
+        $entries = $user->hourEntries()
             ->whereBetween('work_date', [$monthStart, $monthEnd])
             ->get();
 
@@ -36,6 +38,46 @@ class DashboardController extends Controller
             'month_minutes' => (int) $entries->sum('duration_minutes'),
             'month_earnings_cents' => (int) $entries->sum(fn (HourEntry $entry) => $entry->earningsCents()),
             'month_breakdown' => $monthBreakdown,
+            'hours_chart' => $this->hoursChart($user->hourEntries()),
         ]);
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Relations\HasMany<HourEntry, \App\Models\User>  $entries
+     * @return list<array{month: string, minutes: int, hours: float, percent: int}>
+     */
+    private function hoursChart($entries): array
+    {
+        $chartStart = now()->subMonths(5)->startOfMonth()->toDateString();
+        $chartEnd = now()->endOfMonth()->toDateString();
+
+        /** @var Collection<string, int> $minutesByMonth */
+        $minutesByMonth = $entries
+            ->whereBetween('work_date', [$chartStart, $chartEnd])
+            ->get(['work_date', 'duration_minutes'])
+            ->groupBy(fn (HourEntry $entry) => $entry->work_date->format('Y-m'))
+            ->map(fn (Collection $group) => (int) $group->sum('duration_minutes'));
+
+        $points = collect(range(5, 0))->map(function (int $monthsAgo) use ($minutesByMonth) {
+            $month = now()->subMonths($monthsAgo);
+            $key = $month->format('Y-m');
+            $minutes = $minutesByMonth->get($key, 0);
+
+            return [
+                'month' => $key,
+                'minutes' => $minutes,
+                'hours' => round($minutes / 60, 1),
+            ];
+        });
+
+        $maxHours = max(1.0, (float) $points->max('hours'));
+
+        return $points
+            ->map(fn (array $point) => [
+                ...$point,
+                'percent' => (int) round(($point['hours'] / $maxHours) * 100),
+            ])
+            ->values()
+            ->all();
     }
 }
