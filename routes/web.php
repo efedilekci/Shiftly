@@ -35,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
 });
 

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AdminLayout from '@/layouts/admin-layout';
 import { filterAdminUsers, type AdminUserFilters, type AdminUserRow } from '@/lib/admin-user-filters';
 import type { Role } from '@/types';
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useId, useMemo, useState } from 'react';
 
 const roleLabel: Record<Role, string> = {
@@ -136,24 +136,44 @@ export default function AdminUsersIndex({ users, status }: { users: AdminUserRow
                                 <TableHead>E-mail</TableHead>
                                 <TableHead>Rol</TableHead>
                                 <TableHead>Lid sinds</TableHead>
+                                <TableHead className="w-28 text-right">
+                                    <span className="sr-only">Acties</span>
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredUsers.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-muted-foreground h-24 text-center">
+                                    <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
                                         {users.length === 0 ? 'Nog geen gebruikers.' : 'Geen gebruikers gevonden.'}
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 filteredUsers.map((user) => (
                                     <TableRow key={user.id}>
-                                        <TableCell className="font-medium">{user.name}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <Link
+                                                href={route('admin.users.show', user.id)}
+                                                prefetch
+                                                className="text-foreground underline underline-offset-4"
+                                            >
+                                                {user.name}
+                                            </Link>
+                                        </TableCell>
                                         <TableCell className="tabular-nums">{user.email}</TableCell>
                                         <TableCell>
                                             <RoleSelect user={user} />
                                         </TableCell>
                                         <TableCell className="tabular-nums">{formatDate(user.created_at)}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Link
+                                                href={route('admin.users.show', user.id)}
+                                                prefetch
+                                                className="text-sm underline underline-offset-4"
+                                            >
+                                                Bekijken
+                                            </Link>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}
