@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DeleteHourEntryDialog from '@/components/uren/delete-hour-entry-dialog';
 import HourEntryDialog from '@/components/uren/hour-entry-dialog';
+import { downloadHourEntriesCsv } from '@/lib/hour-entry-csv';
 import { filterHourEntries, type HourFilters } from '@/lib/hour-entry-filters';
 import { type Baan } from '@/types/baan';
 import { type HourEntry } from '@/types/hour-entry';
@@ -18,7 +19,7 @@ import {
     tableFeatures,
     useTable,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 
 const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
@@ -150,15 +151,27 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                             </span>
                         </p>
                     )}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!hasFilters}
-                        onClick={() => setFilters({ baanId: '', dateFrom: '', dateTo: '', search: '' })}
-                    >
-                        Filters wissen
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={invalidRange || filteredEntries.length === 0}
+                            onClick={() => downloadHourEntriesCsv(filteredEntries)}
+                        >
+                            <Download className="size-4" aria-hidden />
+                            Exporteer CSV
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={!hasFilters}
+                            onClick={() => setFilters({ baanId: '', dateFrom: '', dateTo: '', search: '' })}
+                        >
+                            Filters wissen
+                        </Button>
+                    </div>
                 </div>
                 {invalidRange && (
                     <p id={`${fieldId}-range-error`} role="alert" className="text-destructive text-sm">
