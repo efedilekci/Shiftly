@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBaanRequest;
+use App\Http\Requests\UpdateBaanRequest;
+use App\Models\Baan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,5 +25,12 @@ class BaanController extends Controller
         $request->user()->banen()->create($request->validated());
 
         return to_route('banen.index')->with('status', 'Baan toegevoegd.');
+    }
+
+    public function update(UpdateBaanRequest $request, Baan $baan): RedirectResponse
+    {
+        $baan->update($request->validated());
+
+        return to_route('banen.index')->with('status', 'Baan bijgewerkt.');
     }
 }

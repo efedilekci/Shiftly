@@ -11,6 +11,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/banen', [BaanController::class, 'index'])->name('banen.index');
     Route::post('/banen', [BaanController::class, 'store'])->name('banen.store');
+    Route::put('/banen/{baan}', [BaanController::class, 'update'])->name('banen.update');
 
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');

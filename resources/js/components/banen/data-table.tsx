@@ -1,6 +1,8 @@
+import BaanDialog from '@/components/banen/baan-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { type Baan } from '@/types/baan';
 import {
     columnFilteringFeature,
     createColumnHelper,
@@ -17,7 +19,6 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 
-export type Baan = { id: number; name: string; hourly_wage: string };
 const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 const features = tableFeatures({
     columnFilteringFeature,
@@ -43,6 +44,12 @@ const columns = columnHelper.columns([
         sortFn: 'basic',
         cell: ({ getValue }) => <span className="tabular-nums">{currency.format(getValue())}</span>,
     }),
+    columnHelper.display({
+        id: 'actions',
+        header: () => <span className="sr-only">Acties</span>,
+        enableSorting: false,
+        cell: ({ row }) => <BaanDialog baan={row.original} />,
+    }),
 ]);
 
 export default function BanenDataTable({ banen }: { banen: Baan[] }) {
@@ -58,7 +65,12 @@ export default function BanenDataTable({ banen }: { banen: Baan[] }) {
                 onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
             />
             <div className="bg-card overflow-hidden rounded-xl border">
-                <Table aria-label="Mijn banen">
+                <Table aria-label="Mijn banen" className="table-fixed">
+                    <colgroup>
+                        <col />
+                        <col className="w-36" />
+                        <col className="w-16" />
+                    </colgroup>
                     <TableHeader>
                         {table.getHeaderGroups().map((group) => (
                             <TableRow key={group.id}>
@@ -68,23 +80,29 @@ export default function BanenDataTable({ banen }: { banen: Baan[] }) {
                                         scope="col"
                                         className={header.column.id === 'hourly_wage' ? 'text-right' : ''}
                                         aria-sort={
-                                            header.column.getIsSorted() === 'asc'
-                                                ? 'ascending'
-                                                : header.column.getIsSorted() === 'desc'
-                                                  ? 'descending'
-                                                  : 'none'
+                                            !header.column.getCanSort()
+                                                ? undefined
+                                                : header.column.getIsSorted() === 'asc'
+                                                  ? 'ascending'
+                                                  : header.column.getIsSorted() === 'desc'
+                                                    ? 'descending'
+                                                    : 'none'
                                         }
                                     >
-                                        <Button type="button" variant="ghost" size="sm" onClick={header.column.getToggleSortingHandler()}>
+                                        {header.column.getCanSort() ? (
+                                            <Button type="button" variant="ghost" size="sm" onClick={header.column.getToggleSortingHandler()}>
+                                                <table.FlexRender header={header} />
+                                                {header.column.getIsSorted() === 'asc' ? (
+                                                    <ArrowUp aria-hidden="true" />
+                                                ) : header.column.getIsSorted() === 'desc' ? (
+                                                    <ArrowDown aria-hidden="true" />
+                                                ) : (
+                                                    <ArrowUpDown aria-hidden="true" />
+                                                )}
+                                            </Button>
+                                        ) : (
                                             <table.FlexRender header={header} />
-                                            {header.column.getIsSorted() === 'asc' ? (
-                                                <ArrowUp aria-hidden="true" />
-                                            ) : header.column.getIsSorted() === 'desc' ? (
-                                                <ArrowDown aria-hidden="true" />
-                                            ) : (
-                                                <ArrowUpDown aria-hidden="true" />
-                                            )}
-                                        </Button>
+                                        )}
                                     </TableHead>
                                 ))}
                             </TableRow>
@@ -95,7 +113,16 @@ export default function BanenDataTable({ banen }: { banen: Baan[] }) {
                             table.getRowModel().rows.map((row) => (
                                 <TableRow key={row.id}>
                                     {row.getAllCells().map((cell) => (
-                                        <TableCell key={cell.id} className={cell.column.id === 'hourly_wage' ? 'px-5 py-4 text-right' : 'px-5 py-4'}>
+                                        <TableCell
+                                            key={cell.id}
+                                            className={
+                                                cell.column.id === 'actions'
+                                                    ? 'px-3 py-4 text-right'
+                                                    : cell.column.id === 'hourly_wage'
+                                                      ? 'px-5 py-4 text-right'
+                                                      : 'px-5 py-4'
+                                            }
+                                        >
                                             <table.FlexRender cell={cell} />
                                         </TableCell>
                                     ))}

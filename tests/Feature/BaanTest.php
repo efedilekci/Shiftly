@@ -92,4 +92,72 @@ class BaanTest extends TestCase
 
         $this->assertDatabaseCount('banen', 0);
     }
+
+    public function test_users_can_update_their_own_job_without_changing_its_owner(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+
+        $this->actingAs($user)->put(route('banen.update', $baan), [
+            'name' => 'Bakkerij',
+            'hourly_wage' => '17,25',
+            'user_id' => $otherUser->id,
+        ])->assertSessionHasNoErrors()->assertRedirect('/banen')->assertSessionHas('status', 'Baan bijgewerkt.');
+
+        $baan->refresh();
+        $this->assertSame('Bakkerij', $baan->name);
+        $this->assertSame('17.25', $baan->hourly_wage);
+        $this->assertSame($user->id, $baan->user_id);
+        $this->assertDatabaseCount('banen', 1);
+    }
+
+    public function test_users_cannot_update_another_users_job(): void
+    {
+        $baan = User::factory()->create()->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+
+        $this->actingAs(User::factory()->create())->put(route('banen.update', $baan), [
+            'name' => 'Aangepast',
+            'hourly_wage' => '99.00',
+        ])->assertForbidden();
+
+        $this->assertSame('Winkel', $baan->fresh()->name);
+        $this->assertSame('15.00', $baan->fresh()->hourly_wage);
+    }
+
+    public function test_guests_cannot_update_jobs(): void
+    {
+        $baan = User::factory()->create()->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+
+        $this->put(route('banen.update', $baan), ['name' => 'Aangepast', 'hourly_wage' => '99.00'])
+            ->assertRedirect('/login');
+
+        $this->assertSame('Winkel', $baan->fresh()->name);
+        $this->assertSame('15.00', $baan->fresh()->hourly_wage);
+    }
+
+    public function test_invalid_updates_leave_the_job_unchanged(): void
+    {
+        $user = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+        $this->actingAs($user);
+
+        foreach (['', '-1', '100000', '15.555', 'geen bedrag'] as $wage) {
+            $this->from('/banen')->put(route('banen.update', $baan), ['name' => 'Aangepast', 'hourly_wage' => $wage])
+                ->assertRedirect('/banen')->assertSessionHasErrors('hourly_wage');
+        }
+        $this->put(route('banen.update', $baan), ['name' => '   ', 'hourly_wage' => '17.25'])
+            ->assertSessionHasErrors('name');
+
+        $this->assertSame('Winkel', $baan->fresh()->name);
+        $this->assertSame('15.00', $baan->fresh()->hourly_wage);
+    }
+
+    public function test_updating_a_missing_job_returns_not_found(): void
+    {
+        $this->actingAs(User::factory()->create())->put('/banen/999999', [
+            'name' => 'Winkel',
+            'hourly_wage' => '15.00',
+        ])->assertNotFound();
+    }
 }

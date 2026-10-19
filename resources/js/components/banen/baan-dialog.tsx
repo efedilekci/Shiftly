@@ -12,29 +12,32 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { type Baan } from '@/types/baan';
 import { useForm } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
-import { type FormEventHandler, useRef, useState } from 'react';
+import { Pencil, Plus } from 'lucide-react';
+import { type FormEventHandler, useId, useRef, useState } from 'react';
 
-export default function CreateBaanDialog() {
+export default function BaanDialog({ baan }: { baan?: Baan }) {
     const [open, setOpen] = useState(false);
+    const fieldId = useId();
     const nameInput = useRef<HTMLInputElement>(null);
     const wageInput = useRef<HTMLInputElement>(null);
-    const { data, setData, post, errors, processing, reset, clearErrors } = useForm({ name: '', hourly_wage: '' });
+    const { data, setData, submit, errors, processing, reset, clearErrors } = useForm({ name: '', hourly_wage: '' });
+    const title = baan ? 'Baan wijzigen' : 'Baan toevoegen';
 
     const changeOpen = (nextOpen: boolean) => {
         if (processing) return;
         if (nextOpen) {
-            reset();
+            setData({ name: baan?.name ?? '', hourly_wage: baan?.hourly_wage.replace('.', ',') ?? '' });
             clearErrors();
         }
         setOpen(nextOpen);
     };
 
-    const submit: FormEventHandler = (event) => {
+    const handleSubmit: FormEventHandler = (event) => {
         event.preventDefault();
         if (processing) return;
-        post(route('banen.store'), {
+        submit(baan ? 'put' : 'post', baan ? route('banen.update', baan.id) : route('banen.store'), {
             preserveScroll: true,
             onSuccess: () => {
                 setOpen(false);
@@ -50,21 +53,27 @@ export default function CreateBaanDialog() {
 
     return (
         <Dialog open={open} onOpenChange={changeOpen}>
-            <DialogTrigger render={<Button />}>
-                <Plus aria-hidden="true" />
-                Baan toevoegen
-            </DialogTrigger>
+            {baan ? (
+                <DialogTrigger render={<Button variant="ghost" size="icon" />} aria-label={`Baan wijzigen: ${baan.name}`}>
+                    <Pencil aria-hidden="true" />
+                </DialogTrigger>
+            ) : (
+                <DialogTrigger render={<Button />}>
+                    <Plus aria-hidden="true" />
+                    Baan toevoegen
+                </DialogTrigger>
+            )}
             <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto" initialFocus={nameInput}>
                 <DialogHeader>
-                    <DialogTitle>Baan toevoegen</DialogTitle>
+                    <DialogTitle>{title}</DialogTitle>
                     <DialogDescription className="sr-only">Vul de naam en het uurloon van je baan in.</DialogDescription>
                 </DialogHeader>
-                <form onSubmit={submit} className="grid gap-6 pt-2" aria-busy={processing}>
+                <form onSubmit={handleSubmit} className="grid gap-6 pt-2" aria-busy={processing}>
                     <div className="grid gap-2">
-                        <Label htmlFor="baan-name">Naam</Label>
+                        <Label htmlFor={`${fieldId}-name`}>Naam</Label>
                         <Input
                             ref={nameInput}
-                            id="baan-name"
+                            id={`${fieldId}-name`}
                             name="name"
                             value={data.name}
                             onChange={(event) => setData('name', event.target.value)}
@@ -73,15 +82,15 @@ export default function CreateBaanDialog() {
                             autoComplete="off"
                             disabled={processing}
                             aria-invalid={!!errors.name}
-                            aria-describedby={errors.name ? 'baan-name-error' : undefined}
+                            aria-describedby={errors.name ? `${fieldId}-name-error` : undefined}
                         />
-                        <InputError id="baan-name-error" message={errors.name} />
+                        <InputError id={`${fieldId}-name-error`} message={errors.name} />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="baan-hourly-wage">Uurloon in euro</Label>
+                        <Label htmlFor={`${fieldId}-wage`}>Uurloon in euro</Label>
                         <Input
                             ref={wageInput}
-                            id="baan-hourly-wage"
+                            id={`${fieldId}-wage`}
                             name="hourly_wage"
                             inputMode="decimal"
                             value={data.hourly_wage}
@@ -91,9 +100,9 @@ export default function CreateBaanDialog() {
                             placeholder="15,00"
                             disabled={processing}
                             aria-invalid={!!errors.hourly_wage}
-                            aria-describedby={errors.hourly_wage ? 'baan-wage-error' : undefined}
+                            aria-describedby={errors.hourly_wage ? `${fieldId}-wage-error` : undefined}
                         />
-                        <InputError id="baan-wage-error" message={errors.hourly_wage} />
+                        <InputError id={`${fieldId}-wage-error`} message={errors.hourly_wage} />
                     </div>
                     <DialogFooter>
                         <DialogClose render={<Button type="button" variant="outline" disabled={processing} />}>Annuleren</DialogClose>
