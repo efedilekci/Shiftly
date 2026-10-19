@@ -48,7 +48,8 @@ class DashboardTest extends TestCase
                 ->where('hours_chart.5.month', '2026-10')
                 ->where('hours_chart.5.minutes', 0)
                 ->where('hours_chart.5.hours', 0)
-                ->where('hours_chart.5.percent', 0));
+                ->where('hours_chart.5.percent', 0)
+                ->where('recent_entries', []));
     }
 
     public function test_dashboard_sums_only_this_months_entries_for_the_current_user(): void
@@ -195,5 +196,47 @@ class DashboardTest extends TestCase
                 ->where('hours_chart.5.minutes', 450)
                 ->where('hours_chart.5.hours', 7.5)
                 ->where('hours_chart.5.percent', 100));
+    }
+
+    public function test_dashboard_shows_the_five_most_recent_entries(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-19 12:00:00', 'Europe/Amsterdam'));
+
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.50']);
+        $otherBaan = $other->banen()->create(['name' => 'Horeca', 'hourly_wage' => '20.00']);
+
+        foreach (range(1, 6) as $day) {
+            $this->actingAs($user)->post('/uren', [
+                'baan_id' => $baan->id,
+                'work_date' => sprintf('2026-10-%02d', $day),
+                'start_time' => '09:00',
+                'end_time' => '10:00',
+                'break_minutes' => 0,
+            ])->assertRedirect('/uren');
+        }
+
+        $this->actingAs($other)->post('/uren', [
+            'baan_id' => $otherBaan->id,
+            'work_date' => '2026-10-19',
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'break_minutes' => 0,
+        ])->assertRedirect('/uren');
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->has('recent_entries', 5)
+                ->where('recent_entries.0.work_date', '2026-10-06')
+                ->where('recent_entries.0.baan_name', 'Winkel')
+                ->where('recent_entries.0.start_time', '09:00')
+                ->where('recent_entries.0.end_time', '10:00')
+                ->where('recent_entries.0.duration_minutes', 60)
+                ->where('recent_entries.0.earnings_cents', 1550)
+                ->where('recent_entries.4.work_date', '2026-10-02'));
     }
 }

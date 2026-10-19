@@ -32,6 +32,23 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
+        $recentEntries = $user->hourEntries()
+            ->orderByDesc('work_date')
+            ->orderByDesc('start_time')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get()
+            ->map(fn (HourEntry $entry) => [
+                'id' => $entry->id,
+                'baan_name' => $entry->baan_name,
+                'work_date' => $entry->work_date->format('Y-m-d'),
+                'start_time' => substr($entry->start_time, 0, 5),
+                'end_time' => substr($entry->end_time, 0, 5),
+                'duration_minutes' => $entry->duration_minutes,
+                'earnings_cents' => $entry->earningsCents(),
+            ])
+            ->all();
+
         return Inertia::render('dashboard', [
             'month' => now()->format('Y-m'),
             'month_entry_count' => $entries->count(),
@@ -39,6 +56,7 @@ class DashboardController extends Controller
             'month_earnings_cents' => (int) $entries->sum(fn (HourEntry $entry) => $entry->earningsCents()),
             'month_breakdown' => $monthBreakdown,
             'hours_chart' => $this->hoursChart($user->hourEntries()),
+            'recent_entries' => $recentEntries,
         ]);
     }
 

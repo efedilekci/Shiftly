@@ -2,10 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
+const dateFormat = new Intl.DateTimeFormat('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 function formatMonthLabel(month: string): string {
     const [year, monthNumber] = month.split('-').map(Number);
@@ -23,6 +24,12 @@ function formatDuration(minutes: number): string {
     return `${Math.floor(minutes / 60)}u ${String(minutes % 60).padStart(2, '0')}m`;
 }
 
+function formatWorkDate(workDate: string): string {
+    const [year, monthNumber, day] = workDate.split('-').map(Number);
+
+    return dateFormat.format(new Date(year, monthNumber - 1, day));
+}
+
 type MonthBreakdownRow = {
     baan_name: string;
     entry_count: number;
@@ -37,6 +44,16 @@ type HoursChartPoint = {
     percent: number;
 };
 
+type RecentEntry = {
+    id: number;
+    baan_name: string;
+    work_date: string;
+    start_time: string;
+    end_time: string;
+    duration_minutes: number;
+    earnings_cents: number;
+};
+
 type DashboardProps = {
     month: string;
     month_entry_count: number;
@@ -44,6 +61,7 @@ type DashboardProps = {
     month_earnings_cents: number;
     month_breakdown: MonthBreakdownRow[];
     hours_chart: HoursChartPoint[];
+    recent_entries: RecentEntry[];
 };
 
 export default function Dashboard({
@@ -53,6 +71,7 @@ export default function Dashboard({
     month_earnings_cents,
     month_breakdown,
     hours_chart,
+    recent_entries,
 }: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
     const monthLabel = formatMonthLabel(month);
@@ -160,6 +179,63 @@ export default function Dashboard({
                                             <TableCell className="text-right tabular-nums">{formatDuration(row.minutes)}</TableCell>
                                             <TableCell className="text-right font-medium tabular-nums">
                                                 {currency.format(row.earnings_cents / 100)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                        <div className="space-y-1.5">
+                            <CardTitle className="text-lg">Recente uren</CardTitle>
+                            <CardDescription>Laatste 5 registraties</CardDescription>
+                        </div>
+                        <Link href={route('uren.index')} className="text-sm underline underline-offset-4">
+                            Alle uren
+                        </Link>
+                    </CardHeader>
+                    <CardContent>
+                        {recent_entries.length === 0 ? (
+                            <p className="text-muted-foreground text-sm">
+                                Nog geen uren.{' '}
+                                <Link href={route('uren.index')} className="text-foreground underline underline-offset-4">
+                                    Registreer je eerste uren
+                                </Link>
+                                .
+                            </p>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Datum</TableHead>
+                                        <TableHead>Baan</TableHead>
+                                        <TableHead>Tijd</TableHead>
+                                        <TableHead className="text-right">Gewerkt</TableHead>
+                                        <TableHead className="text-right">Verdiensten</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {recent_entries.map((entry) => (
+                                        <TableRow key={entry.id}>
+                                            <TableCell className="tabular-nums">{formatWorkDate(entry.work_date)}</TableCell>
+                                            <TableCell className="max-w-xs font-medium [overflow-wrap:anywhere] whitespace-normal">
+                                                {entry.baan_name}
+                                            </TableCell>
+                                            <TableCell className="tabular-nums">
+                                                {entry.start_time}–{entry.end_time}
+                                                {entry.end_time < entry.start_time && (
+                                                    <span className="text-muted-foreground ml-1 text-xs">(+1 dag)</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {formatDuration(entry.duration_minutes)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium tabular-nums">
+                                                {currency.format(entry.earnings_cents / 100)}
                                             </TableCell>
                                         </TableRow>
                                     ))}
