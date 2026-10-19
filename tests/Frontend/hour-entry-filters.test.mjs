@@ -3,8 +3,8 @@ import test from 'node:test';
 import { filterHourEntries } from '../../resources/js/lib/hour-entry-filters.ts';
 
 const all = { baanId: '', dateFrom: '', dateTo: '', search: '' };
-const entry = (id, baan_id, baan_name, work_date, duration_minutes) => ({
-    id, baan_id, baan_name, work_date, duration_minutes,
+const entry = (id, baan_id, baan_name, work_date, duration_minutes, earnings_cents = 0) => ({
+    id, baan_id, baan_name, work_date, duration_minutes, earnings_cents,
     start_time: '09:00', end_time: '17:00', break_minutes: 30,
 });
 const entries = [
@@ -58,4 +58,21 @@ test('totals include matches beyond the first table page', () => {
     const result = filterHourEntries(manyEntries, { ...all, baanId: '1' });
     assert.equal(result.entries.length, 15);
     assert.equal(result.totalMinutes, 915);
+});
+
+test('earnings totals follow the same combined period, job and search filters', () => {
+    const paidEntries = [
+        entry(1, 1, 'Winkel', '2026-10-18', 450, 11625),
+        entry(2, 1, 'Winkel', '2026-10-19', 465, 12013),
+        entry(3, 2, 'Bakkerij', '2026-10-19', 300, 10000),
+        entry(4, 1, 'Winkel', '2026-10-20', 120, 3100),
+    ];
+    const result = filterHourEntries(paidEntries, { ...all, baanId: '1', dateFrom: '2026-10-19', dateTo: '2026-10-20', search: 'WINKEL' });
+    assert.equal(result.totalEarningsCents, 15113);
+    assert.equal(filterHourEntries(paidEntries, { ...all, baanId: '999' }).totalEarningsCents, 0);
+});
+
+test('the earnings total sums rounded registrations across all pages', () => {
+    const paidEntries = Array.from({ length: 15 }, (_, index) => entry(index + 1, 1, 'Winkel', '2026-10-19', 1, 1));
+    assert.equal(filterHourEntries(paidEntries, all).totalEarningsCents, 15);
 });

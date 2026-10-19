@@ -23,6 +23,7 @@ export function filterHourEntries(entries: HourEntry[], filters: HourFilters) {
     return {
         entries: filtered,
         totalMinutes: filtered.reduce((total, entry) => total + entry.duration_minutes, 0),
+        totalEarningsCents: filtered.reduce((total, entry) => total + entry.earnings_cents, 0),
         invalidRange,
     };
 }

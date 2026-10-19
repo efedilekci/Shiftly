@@ -25,6 +25,7 @@ class HourEntryController extends Controller
                     'end_time' => substr($entry->end_time, 0, 5),
                     'break_minutes' => $entry->break_minutes,
                     'duration_minutes' => $entry->duration_minutes,
+                    'earnings_cents' => $entry->earningsCents(),
                 ]),
             'banen' => $request->user()->banen()->orderBy('name')->get(['id', 'name', 'hourly_wage']),
             'today' => now()->toDateString(),

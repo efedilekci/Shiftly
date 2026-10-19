@@ -32,6 +32,15 @@ class HourEntry extends Model
         return $this->belongsTo(Baan::class);
     }
 
+    public function earningsCents(): int
+    {
+        [$euros, $cents] = explode('.', $this->hourly_wage);
+        $hourlyCents = (int) $euros * 100 + (int) $cents;
+
+        // Round half a cent up without floating-point amounts.
+        return intdiv($hourlyCents * $this->duration_minutes + 30, 60);
+    }
+
     public static function grossMinutes(string $startTime, string $endTime): int
     {
         [$startHour, $startMinute] = array_map('intval', explode(':', $startTime));

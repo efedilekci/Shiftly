@@ -21,6 +21,7 @@ import {
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 
+const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 const dateFormat = new Intl.DateTimeFormat('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 const features = tableFeatures({
     rowSortingFeature,
@@ -65,12 +66,22 @@ const columns = helper.columns([
             </span>
         ),
     }),
+    helper.accessor('earnings_cents', {
+        header: 'Verdiensten',
+        sortFn: 'basic',
+        cell: ({ getValue }) => <span className="font-medium tabular-nums">{currency.format(getValue() / 100)}</span>,
+    }),
 ]);
 
 export default function HoursDataTable({ entries, banen, today }: { entries: HourEntry[]; banen: Baan[]; today: string }) {
     const fieldId = useId();
     const [filters, setFilters] = useState<HourFilters>({ baanId: '', dateFrom: '', dateTo: '', search: '' });
-    const { entries: filteredEntries, totalMinutes, invalidRange } = useMemo(() => filterHourEntries(entries, filters), [entries, filters]);
+    const {
+        entries: filteredEntries,
+        totalMinutes,
+        totalEarningsCents,
+        invalidRange,
+    } = useMemo(() => filterHourEntries(entries, filters), [entries, filters]);
     const hasFilters = Object.values(filters).some(Boolean);
     const table = useTable({ features, data: filteredEntries, columns, getRowId: (entry) => String(entry.id) });
     return (
@@ -131,7 +142,10 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                             <span className="font-semibold tabular-nums">
                                 {Math.floor(totalMinutes / 60)}u {String(totalMinutes % 60).padStart(2, '0')}m
                             </span>
-                            <span className="text-muted-foreground ml-3">
+                            <span className="ml-3 inline-block">
+                                Verdiensten: <span className="font-semibold tabular-nums">{currency.format(totalEarningsCents / 100)}</span>
+                            </span>
+                            <span className="text-muted-foreground ml-3 inline-block">
                                 {filteredEntries.length} {filteredEntries.length === 1 ? 'registratie' : 'registraties'}
                             </span>
                         </p>
@@ -155,7 +169,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
             {!invalidRange && (
                 <>
                     <div className="bg-card overflow-hidden rounded-xl border">
-                        <Table aria-label="Mijn uren" className="min-w-[51rem] table-fixed">
+                        <Table aria-label="Mijn uren" className="min-w-[59rem] table-fixed">
                             <colgroup>
                                 <col className="w-32" />
                                 <col />
@@ -163,6 +177,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                 <col className="w-32" />
                                 <col className="w-24" />
                                 <col className="w-28" />
+                                <col className="w-32" />
                                 <col className="w-28" />
                             </colgroup>
                             <TableHeader>
