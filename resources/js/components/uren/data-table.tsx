@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import DeleteHourEntryDialog from '@/components/uren/delete-hour-entry-dialog';
 import HourEntryDialog from '@/components/uren/hour-entry-dialog';
 import { type Baan } from '@/types/baan';
 import { type HourEntry } from '@/types/hour-entry';
@@ -82,7 +83,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                 onChange={(event) => table.getColumn('baan_name')?.setFilterValue(event.target.value)}
             />
             <div className="bg-card overflow-hidden rounded-xl border">
-                <Table aria-label="Mijn uren" className="min-w-[48rem] table-fixed">
+                <Table aria-label="Mijn uren" className="min-w-[51rem] table-fixed">
                     <colgroup>
                         <col className="w-32" />
                         <col />
@@ -90,7 +91,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                         <col className="w-32" />
                         <col className="w-24" />
                         <col className="w-28" />
-                        <col className="w-16" />
+                        <col className="w-28" />
                     </colgroup>
                     <TableHeader>
                         {table.getHeaderGroups().map((group) => (
@@ -135,7 +136,10 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                         </TableCell>
                                     ))}
                                     <TableCell className="px-3 py-4 text-right">
-                                        <HourEntryDialog entry={row.original} banen={banen} today={today} />
+                                        <div className="flex items-center justify-end gap-1">
+                                            <HourEntryDialog entry={row.original} banen={banen} today={today} />
+                                            <DeleteHourEntryDialog entry={row.original} />
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))

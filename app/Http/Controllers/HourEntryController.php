@@ -66,4 +66,13 @@ class HourEntryController extends Controller
 
         return to_route('uren.index')->with('status', 'Uren bijgewerkt.');
     }
+
+    public function destroy(Request $request, HourEntry $hourEntry): RedirectResponse
+    {
+        abort_unless($hourEntry->user_id === $request->user()->id, 403);
+
+        $hourEntry->delete();
+
+        return to_route('uren.index')->with('status', 'Uren verwijderd.');
+    }
 }
