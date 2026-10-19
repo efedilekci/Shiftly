@@ -17,7 +17,12 @@ export function filterHourEntries(entries: HourEntry[], filters: HourFilters) {
               if (filters.dateTo && entry.work_date > filters.dateTo) return false;
               if (filters.baanId === 'deleted' && entry.baan_id !== null) return false;
               if (filters.baanId && filters.baanId !== 'deleted' && String(entry.baan_id) !== filters.baanId) return false;
-              return !search || entry.baan_name.toLocaleLowerCase('nl-NL').includes(search);
+              if (!search) return true;
+
+              return (
+                  entry.baan_name.toLocaleLowerCase('nl-NL').includes(search) ||
+                  (entry.note?.toLocaleLowerCase('nl-NL').includes(search) ?? false)
+              );
           });
 
     return {

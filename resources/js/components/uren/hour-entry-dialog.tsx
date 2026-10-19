@@ -29,6 +29,7 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
         start_time: entry?.start_time ?? '',
         end_time: entry?.end_time ?? '',
         break_minutes: String(entry?.break_minutes ?? 0),
+        note: entry?.note ?? '',
     };
     const { data, setData, submit: send, errors, processing, reset, clearErrors } = useForm(initialData);
     const overnight = data.start_time !== '' && data.end_time !== '' && data.end_time < data.start_time;
@@ -65,7 +66,7 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
                 clearErrors();
             },
             onError: (validationErrors) => {
-                const field = ['baan_id', 'work_date', 'start_time', 'end_time', 'break_minutes'].find((key) => validationErrors[key]);
+                const field = ['baan_id', 'work_date', 'start_time', 'end_time', 'break_minutes', 'note'].find((key) => validationErrors[key]);
                 if (field) (form.current?.elements.namedItem(field) as HTMLElement | null)?.focus();
             },
         });
@@ -88,7 +89,7 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
             <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg" initialFocus={baanInput}>
                 <DialogHeader>
                     <DialogTitle>{entry ? 'Uren wijzigen' : 'Uren toevoegen'}</DialogTitle>
-                    <DialogDescription className="sr-only">Registreer een dienst met begin- en eindtijd en pauze.</DialogDescription>
+                    <DialogDescription className="sr-only">Registreer een dienst met begin- en eindtijd, pauze en optionele notitie.</DialogDescription>
                 </DialogHeader>
                 <form ref={form} onSubmit={handleSubmit} className="grid gap-5 pt-2" aria-busy={processing}>
                     <div className="grid gap-2">
@@ -191,6 +192,26 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
                             Gewerkt: {Math.floor(duration / 60)}u {String(duration % 60).padStart(2, '0')}m
                         </p>
                     )}
+                    <div className="grid gap-2">
+                        <Label htmlFor={`${fieldId}-note`}>Notitie (optioneel)</Label>
+                        <textarea
+                            id={`${fieldId}-note`}
+                            name="note"
+                            rows={3}
+                            maxLength={500}
+                            value={data.note}
+                            onChange={(event) => setData('note', event.target.value)}
+                            disabled={processing}
+                            placeholder="Bijv. drukke avond, feestdag..."
+                            className="border-input bg-background placeholder:text-muted-foreground flex min-h-20 w-full rounded-md border px-3 py-2 text-base disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            aria-invalid={!!errors.note}
+                            aria-describedby={errors.note ? `${fieldId}-note-error` : `${fieldId}-note-hint`}
+                        />
+                        <p id={`${fieldId}-note-hint`} className="text-muted-foreground text-xs tabular-nums">
+                            {data.note.length}/500
+                        </p>
+                        <InputError id={`${fieldId}-note-error`} message={errors.note} />
+                    </div>
                     <DialogFooter>
                         <DialogClose render={<Button type="button" variant="outline" disabled={processing} />}>Annuleren</DialogClose>
                         <Button type="submit" disabled={processing}>

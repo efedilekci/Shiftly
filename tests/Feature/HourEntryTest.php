@@ -135,6 +135,31 @@ class HourEntryTest extends TestCase
         $this->assertDatabaseCount('hour_entries', 0);
     }
 
+    public function test_optional_notes_are_trimmed_and_limited(): void
+    {
+        $user = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+
+        $this->actingAs($user)->post('/uren', $this->entryData($baan, ['note' => '  Avonddienst  ']))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/uren');
+
+        $this->assertSame('Avonddienst', HourEntry::firstOrFail()->note);
+
+        $this->get('/uren')->assertInertia(fn (Assert $page) => $page
+            ->component('uren/index')
+            ->where('entries.0.note', 'Avonddienst'));
+
+        $this->post('/uren', $this->entryData($baan, ['note' => '']))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/uren');
+        $this->assertNull(HourEntry::latest('id')->firstOrFail()->note);
+
+        $this->from('/uren')->post('/uren', $this->entryData($baan, ['note' => str_repeat('a', 501)]))
+            ->assertRedirect('/uren')
+            ->assertSessionHasErrors('note');
+    }
+
     public function test_recorded_hours_keep_the_original_job_details_when_a_job_changes_or_is_deleted(): void
     {
         $user = User::factory()->create();

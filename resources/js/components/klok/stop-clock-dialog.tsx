@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useForm } from '@inertiajs/react';
 import { type FormEventHandler, useId, useRef, useState } from 'react';
 
-type StopClockForm = { break_minutes: string; redirect?: string; clock?: string };
+type StopClockForm = { break_minutes: string; note: string; redirect?: string; clock?: string };
 
 export default function StopClockDialog({ redirect }: { redirect?: 'dashboard' | 'clock.index' }) {
     const [open, setOpen] = useState(false);
@@ -23,6 +23,7 @@ export default function StopClockDialog({ redirect }: { redirect?: 'dashboard' |
     const fieldId = useId();
     const { data, setData, post, processing, errors, clearErrors } = useForm<StopClockForm>({
         break_minutes: '0',
+        note: '',
         ...(redirect ? { redirect } : {}),
     });
     const submit: FormEventHandler = (event) => {
@@ -37,7 +38,7 @@ export default function StopClockDialog({ redirect }: { redirect?: 'dashboard' |
                 if (processing) return;
                 if (nextOpen) {
                     clearErrors();
-                    setData({ break_minutes: '0', ...(redirect ? { redirect } : {}) });
+                    setData({ break_minutes: '0', note: '', ...(redirect ? { redirect } : {}) });
                 }
                 setOpen(nextOpen);
             }}
@@ -67,6 +68,23 @@ export default function StopClockDialog({ redirect }: { redirect?: 'dashboard' |
                         />
                         <InputError id={`${fieldId}-error`} message={errors.break_minutes} />
                         <InputError message={errors.clock} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor={`${fieldId}-note`}>Notitie (optioneel)</Label>
+                        <textarea
+                            id={`${fieldId}-note`}
+                            name="note"
+                            rows={3}
+                            maxLength={500}
+                            value={data.note}
+                            onChange={(event) => setData('note', event.target.value)}
+                            disabled={processing}
+                            placeholder="Bijv. drukke avond, feestdag..."
+                            className="border-input bg-background placeholder:text-muted-foreground flex min-h-20 w-full rounded-md border px-3 py-2 text-base disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            aria-invalid={!!errors.note}
+                            aria-describedby={errors.note ? `${fieldId}-note-error` : undefined}
+                        />
+                        <InputError id={`${fieldId}-note-error`} message={errors.note} />
                     </div>
                     <DialogFooter>
                         <DialogClose render={<Button type="button" variant="outline" disabled={processing} />}>Terug</DialogClose>

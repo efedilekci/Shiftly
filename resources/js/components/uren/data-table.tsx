@@ -72,6 +72,16 @@ const columns = helper.columns([
         sortFn: 'basic',
         cell: ({ getValue }) => <span className="font-medium tabular-nums">{currency.format(getValue() / 100)}</span>,
     }),
+    helper.accessor('note', {
+        header: 'Notitie',
+        enableSorting: false,
+        cell: ({ getValue }) => {
+            const note = getValue();
+            if (!note) return <span className="text-muted-foreground">—</span>;
+
+            return <span className="block max-w-48 [overflow-wrap:anywhere] whitespace-normal">{note}</span>;
+        },
+    }),
 ]);
 
 export default function HoursDataTable({ entries, banen, today }: { entries: HourEntry[]; banen: Baan[]; today: string }) {
@@ -130,7 +140,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                         <Label htmlFor={`${fieldId}-search`}>Zoeken</Label>
                         <Input
                             id={`${fieldId}-search`}
-                            placeholder="Zoek op baan..."
+                            placeholder="Zoek op baan of notitie..."
                             value={filters.search}
                             onChange={(event) => setFilters({ ...filters, search: event.target.value })}
                         />
@@ -191,6 +201,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                 <col className="w-24" />
                                 <col className="w-28" />
                                 <col className="w-32" />
+                                <col className="w-40" />
                                 <col className="w-28" />
                             </colgroup>
                             <TableHeader>

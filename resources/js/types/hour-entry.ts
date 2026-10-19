@@ -8,4 +8,5 @@ export type HourEntry = {
     break_minutes: number;
     duration_minutes: number;
     earnings_cents: number;
+    note: string | null;
 };

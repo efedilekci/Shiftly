@@ -9,7 +9,7 @@ class HourEntry extends Model
 {
     protected $fillable = [
         'baan_id', 'baan_name', 'hourly_wage', 'work_date',
-        'start_time', 'end_time', 'break_minutes', 'duration_minutes',
+        'start_time', 'end_time', 'break_minutes', 'duration_minutes', 'note',
     ];
 
     protected function casts(): array

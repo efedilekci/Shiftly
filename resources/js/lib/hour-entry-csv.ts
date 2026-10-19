@@ -17,7 +17,7 @@ function formatEarnings(cents: number): string {
 }
 
 export function hourEntriesToCsv(entries: HourEntry[]): string {
-    const header = ['Datum', 'Baan', 'Begin', 'Einde', 'Pauze (min)', 'Gewerkt', 'Verdiensten (EUR)'];
+    const header = ['Datum', 'Baan', 'Begin', 'Einde', 'Pauze (min)', 'Gewerkt', 'Verdiensten (EUR)', 'Notitie'];
     const rows = entries.map((entry) => [
         entry.work_date,
         entry.baan_name,
@@ -26,6 +26,7 @@ export function hourEntriesToCsv(entries: HourEntry[]): string {
         String(entry.break_minutes),
         formatDuration(entry.duration_minutes),
         formatEarnings(entry.earnings_cents),
+        entry.note ?? '',
     ]);
 
     return [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\r\n');

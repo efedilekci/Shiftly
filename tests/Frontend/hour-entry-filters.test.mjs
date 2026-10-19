@@ -3,13 +3,13 @@ import test from 'node:test';
 import { filterHourEntries } from '../../resources/js/lib/hour-entry-filters.ts';
 
 const all = { baanId: '', dateFrom: '', dateTo: '', search: '' };
-const entry = (id, baan_id, baan_name, work_date, duration_minutes, earnings_cents = 0) => ({
-    id, baan_id, baan_name, work_date, duration_minutes, earnings_cents,
+const entry = (id, baan_id, baan_name, work_date, duration_minutes, earnings_cents = 0, note = null) => ({
+    id, baan_id, baan_name, work_date, duration_minutes, earnings_cents, note,
     start_time: '09:00', end_time: '17:00', break_minutes: 30,
 });
 const entries = [
     entry(1, 1, 'Winkel', '2026-10-18', 450),
-    entry(2, 1, 'Winkel', '2026-10-19', 465),
+    entry(2, 1, 'Winkel', '2026-10-19', 465, 0, 'Drukke avond'),
     entry(3, 2, 'Bakkerij', '2026-10-19', 300),
     entry(4, 1, 'Oude winkelnaam', '2026-10-20', 120),
     entry(5, null, 'Verwijderde baan', '2026-10-21', 60),
@@ -31,6 +31,11 @@ test('search combines with period and job filters without case sensitivity', () 
     const result = filterHourEntries(entries, { ...all, baanId: '1', dateFrom: '2026-10-19', search: '  WINKEL  ' });
     assert.deepEqual(result.entries.map((row) => row.id), [2, 4]);
     assert.equal(result.totalMinutes, 585);
+});
+
+test('search also matches notes', () => {
+    const result = filterHourEntries(entries, { ...all, search: 'drukke' });
+    assert.deepEqual(result.entries.map((row) => row.id), [2]);
 });
 
 test('single-ended periods and deleted jobs can be selected', () => {

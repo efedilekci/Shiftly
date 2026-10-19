@@ -60,13 +60,19 @@ class ClockController extends Controller
     {
         $data = $request->validate([
             'break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
+            'note' => ['nullable', 'string', 'max:500'],
             'redirect' => ['sometimes', Rule::in(['dashboard', 'clock.index'])],
         ], [
             'break_minutes.required' => 'Vul de pauze in minuten in, of 0 als je geen pauze had.',
             'break_minutes.integer' => 'Vul een heel aantal minuten in.',
             'break_minutes.min' => 'De pauze mag niet negatief zijn.',
             'break_minutes.max' => 'De pauze moet korter zijn dan een dag.',
+            'note.string' => 'Vul een geldige notitie in.',
+            'note.max' => 'De notitie mag maximaal 500 tekens zijn.',
         ]);
+
+        $note = is_string($data['note'] ?? null) ? trim($data['note']) : '';
+        $data['note'] = $note === '' ? null : $note;
 
         DB::transaction(function () use ($request, $data) {
             $user = User::query()->lockForUpdate()->findOrFail($request->user()->id);
@@ -95,6 +101,7 @@ class ClockController extends Controller
                 'end_time' => $end->format('H:i:s'),
                 'break_minutes' => (int) $data['break_minutes'],
                 'duration_minutes' => $grossMinutes - (int) $data['break_minutes'],
+                'note' => $data['note'],
             ]);
             $clock->delete();
         });

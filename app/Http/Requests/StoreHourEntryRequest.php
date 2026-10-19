@@ -22,7 +22,22 @@ class StoreHourEntryRequest extends FormRequest
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i'],
             'break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
+            'note' => ['nullable', 'string', 'max:500'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $note = $this->input('note');
+
+        if (! is_string($note)) {
+            $this->merge(['note' => null]);
+
+            return;
+        }
+
+        $trimmed = trim($note);
+        $this->merge(['note' => $trimmed === '' ? null : $trimmed]);
     }
 
     public function after(): array
@@ -58,6 +73,8 @@ class StoreHourEntryRequest extends FormRequest
             'break_minutes.integer' => 'Vul een heel aantal minuten in.',
             'break_minutes.min' => 'De pauze mag niet negatief zijn.',
             'break_minutes.max' => 'De pauze moet korter zijn dan een dag.',
+            'note.string' => 'Vul een geldige notitie in.',
+            'note.max' => 'De notitie mag maximaal 500 tekens zijn.',
         ];
     }
 }
