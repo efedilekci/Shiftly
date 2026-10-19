@@ -22,12 +22,13 @@ export default function MobileBottomNav() {
                                 prefetch
                                 aria-current={active ? 'page' : undefined}
                                 className={cn(
-                                    'text-muted-foreground flex min-h-14 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-medium transition-colors',
+                                    'text-muted-foreground relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-medium transition-colors',
                                     active && 'text-foreground',
                                 )}
                             >
+                                {active ? <span aria-hidden className="bg-foreground absolute top-1 h-0.5 w-4 rounded-full" /> : null}
                                 {Icon && <Icon className="size-5" aria-hidden />}
-                                <span>{item.title}</span>
+                                <span className={cn(active && 'font-display font-semibold')}>{item.title}</span>
                             </Link>
                         </li>
                     );

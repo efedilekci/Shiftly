@@ -18,12 +18,12 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+        <Sidebar collapsible="icon" variant="inset" className="border-sidebar-border/60">
+            <SidebarHeader className="border-sidebar-border/60 border-b">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
+                        <SidebarMenuButton size="lg" asChild className="hover:bg-sidebar-accent/70">
+                            <Link href="/dashboard" prefetch aria-label="Shiftly dashboard">
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -35,7 +35,7 @@ export function AppSidebar() {
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 
-            <SidebarFooter>
+            <SidebarFooter className="border-sidebar-border/60 border-t">
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>

@@ -73,7 +73,7 @@ export default function Klok({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Klok" />
             <div className="mx-auto w-full max-w-6xl space-y-6 px-5 py-8 sm:p-10">
-                <h1 className="text-3xl font-semibold tracking-tight">Klok</h1>
+                <h1 className="font-display text-3xl font-semibold tracking-tight">Klok</h1>
                 {status && (
                     <p role="status" className="text-primary text-sm">
                         {status}

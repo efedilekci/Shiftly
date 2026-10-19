@@ -14,7 +14,7 @@ export default function Uren({ entries, banen, today, status }: { entries: HourE
             <Head title="Uren" />
             <div className="mx-auto w-full max-w-6xl space-y-6 px-5 py-8 sm:p-10">
                 <header className="flex flex-wrap items-center justify-between gap-4">
-                    <h1 className="text-3xl font-semibold tracking-tight">Uren</h1>
+                    <h1 className="font-display text-3xl font-semibold tracking-tight">Uren</h1>
                     <HourEntryDialog banen={banen} today={today} />
                 </header>
                 {status && (

@@ -101,7 +101,7 @@ export default function Dashboard({
             <Head title="Dashboard" />
             <div className="mx-auto w-full max-w-6xl space-y-8 px-5 py-8 sm:p-10">
                 <header className="space-y-2">
-                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Welkom, {auth.user.name}.</h1>
+                    <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Welkom, {auth.user.name}.</h1>
                     <p className="text-muted-foreground text-sm">Overzicht van {monthLabel}</p>
                 </header>
 
