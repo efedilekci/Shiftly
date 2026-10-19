@@ -2,21 +2,11 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { mainNavItems } from '@/lib/main-nav';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BriefcaseBusiness, Clock3, Folder, LayoutGrid, Timer } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import AppLogo from './app-logo';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutGrid,
-    },
-    { title: 'Banen', url: '/banen', icon: BriefcaseBusiness },
-    { title: 'Uren', url: '/uren', icon: Clock3 },
-    { title: 'Klok', url: '/klok', icon: Timer },
-];
 
 const footerNavItems: NavItem[] = [
     {
