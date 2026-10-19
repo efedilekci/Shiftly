@@ -49,6 +49,8 @@ class DashboardController extends Controller
             ])
             ->all();
 
+        $clock = $user->runningClock()->first();
+
         return Inertia::render('dashboard', [
             'month' => now()->format('Y-m'),
             'month_entry_count' => $entries->count(),
@@ -57,6 +59,11 @@ class DashboardController extends Controller
             'month_breakdown' => $monthBreakdown,
             'hours_chart' => $this->hoursChart($user->hourEntries()),
             'recent_entries' => $recentEntries,
+            'activeClock' => $clock ? ['baan_name' => $clock->baan_name, 'started_at' => $clock->started_at] : null,
+            'banen' => $user->banen()->orderBy('name')->get(['id', 'name', 'hourly_wage']),
+            'serverNow' => now()->timestamp,
+            'timezone' => config('app.timezone'),
+            'status' => $request->session()->get('status'),
         ]);
     }
 

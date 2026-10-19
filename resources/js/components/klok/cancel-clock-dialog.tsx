@@ -12,10 +12,10 @@ import { Button } from '@/components/ui/button';
 import { useForm } from '@inertiajs/react';
 import { type FormEventHandler, useRef, useState } from 'react';
 
-export default function CancelClockDialog() {
+export default function CancelClockDialog({ redirect }: { redirect?: 'dashboard' | 'clock.index' }) {
     const [open, setOpen] = useState(false);
     const backButton = useRef<HTMLButtonElement>(null);
-    const { delete: destroy, processing } = useForm({});
+    const { delete: destroy, processing } = useForm(redirect ? { redirect } : {});
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
         if (processing) return;

@@ -31,6 +31,7 @@ class ClockController extends Controller
     {
         $data = $request->validate([
             'baan_id' => ['required', 'integer', Rule::exists('banen', 'id')->where('user_id', $request->user()->id)],
+            'redirect' => ['sometimes', Rule::in(['dashboard', 'clock.index'])],
         ], [
             'baan_id.required' => 'Kies een baan.',
             'baan_id.integer' => 'Kies een geldige baan.',
@@ -52,13 +53,14 @@ class ClockController extends Controller
             ]);
         });
 
-        return to_route('clock.index');
+        return to_route($data['redirect'] ?? 'clock.index');
     }
 
     public function stop(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
+            'redirect' => ['sometimes', Rule::in(['dashboard', 'clock.index'])],
         ], [
             'break_minutes.required' => 'Vul de pauze in minuten in, of 0 als je geen pauze had.',
             'break_minutes.integer' => 'Vul een heel aantal minuten in.',
@@ -97,16 +99,20 @@ class ClockController extends Controller
             $clock->delete();
         });
 
-        return to_route('clock.index')->with('status', 'Uitgeklokt. Je uren zijn opgeslagen.');
+        return to_route($data['redirect'] ?? 'clock.index')->with('status', 'Uitgeklokt. Je uren zijn opgeslagen.');
     }
 
     public function cancel(Request $request): RedirectResponse
     {
+        $data = $request->validate([
+            'redirect' => ['sometimes', Rule::in(['dashboard', 'clock.index'])],
+        ]);
+
         DB::transaction(function () use ($request) {
             $user = User::query()->lockForUpdate()->findOrFail($request->user()->id);
             $user->runningClock()->delete();
         });
 
-        return to_route('clock.index')->with('status', 'Dienst geannuleerd.');
+        return to_route($data['redirect'] ?? 'clock.index')->with('status', 'Dienst geannuleerd.');
     }
 }

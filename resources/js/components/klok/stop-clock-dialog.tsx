@@ -15,13 +15,16 @@ import { Label } from '@/components/ui/label';
 import { useForm } from '@inertiajs/react';
 import { type FormEventHandler, useId, useRef, useState } from 'react';
 
-type StopClockForm = { break_minutes: string; clock?: string };
+type StopClockForm = { break_minutes: string; redirect?: string; clock?: string };
 
-export default function StopClockDialog() {
+export default function StopClockDialog({ redirect }: { redirect?: 'dashboard' | 'clock.index' }) {
     const [open, setOpen] = useState(false);
     const pauseInput = useRef<HTMLInputElement>(null);
     const fieldId = useId();
-    const { data, setData, post, processing, errors, clearErrors } = useForm<StopClockForm>({ break_minutes: '0' });
+    const { data, setData, post, processing, errors, clearErrors } = useForm<StopClockForm>({
+        break_minutes: '0',
+        ...(redirect ? { redirect } : {}),
+    });
     const submit: FormEventHandler = (event) => {
         event.preventDefault();
         if (processing) return;
@@ -34,7 +37,7 @@ export default function StopClockDialog() {
                 if (processing) return;
                 if (nextOpen) {
                     clearErrors();
-                    setData('break_minutes', '0');
+                    setData({ break_minutes: '0', ...(redirect ? { redirect } : {}) });
                 }
                 setOpen(nextOpen);
             }}

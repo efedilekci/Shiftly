@@ -239,4 +239,33 @@ class DashboardTest extends TestCase
                 ->where('recent_entries.0.earnings_cents', 1550)
                 ->where('recent_entries.4.work_date', '2026-10-02'));
     }
+
+    public function test_dashboard_shows_clock_status_and_jobs(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-19 12:00:00', 'Europe/Amsterdam'));
+
+        $user = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.50']);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('activeClock', null)
+                ->has('banen', 1)
+                ->where('banen.0.id', $baan->id)
+                ->where('timezone', 'Europe/Amsterdam'));
+
+        $this->post('/klok/in', ['baan_id' => $baan->id, 'redirect' => 'dashboard'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/dashboard');
+
+        $this->get('/dashboard')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('activeClock.baan_name', 'Winkel')
+                ->where('activeClock.started_at', now()->timestamp));
+    }
 }

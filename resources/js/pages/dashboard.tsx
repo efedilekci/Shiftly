@@ -1,7 +1,9 @@
+import DashboardClockCard from '@/components/klok/dashboard-clock-card';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
+import { type Baan } from '@/types/baan';
 import { Head, Link, usePage } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
@@ -54,6 +56,8 @@ type RecentEntry = {
     earnings_cents: number;
 };
 
+type ActiveClock = { baan_name: string; started_at: number };
+
 type DashboardProps = {
     month: string;
     month_entry_count: number;
@@ -62,6 +66,11 @@ type DashboardProps = {
     month_breakdown: MonthBreakdownRow[];
     hours_chart: HoursChartPoint[];
     recent_entries: RecentEntry[];
+    activeClock: ActiveClock | null;
+    banen: Baan[];
+    serverNow: number;
+    timezone: string;
+    status?: string;
 };
 
 export default function Dashboard({
@@ -72,6 +81,11 @@ export default function Dashboard({
     month_breakdown,
     hours_chart,
     recent_entries,
+    activeClock,
+    banen,
+    serverNow,
+    timezone,
+    status,
 }: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
     const monthLabel = formatMonthLabel(month);
@@ -91,16 +105,27 @@ export default function Dashboard({
                     <p className="text-muted-foreground text-sm">Overzicht van {monthLabel}</p>
                 </header>
 
-                <section aria-label={`Maandtotalen ${monthLabel}`} className="grid gap-4 sm:grid-cols-3">
-                    {stats.map((stat) => (
-                        <Card key={stat.label}>
-                            <CardHeader>
-                                <CardDescription>{stat.label}</CardDescription>
-                                <CardTitle className="text-2xl tabular-nums">{stat.value}</CardTitle>
-                            </CardHeader>
-                        </Card>
-                    ))}
-                </section>
+                {status && (
+                    <p role="status" className="text-primary text-sm">
+                        {status}
+                    </p>
+                )}
+
+                <div className="grid gap-4 md:grid-cols-4">
+                    <div className="md:col-span-1">
+                        <DashboardClockCard activeClock={activeClock} banen={banen} serverNow={serverNow} timezone={timezone} />
+                    </div>
+                    <section aria-label={`Maandtotalen ${monthLabel}`} className="grid gap-4 sm:grid-cols-3 md:col-span-3">
+                        {stats.map((stat) => (
+                            <Card key={stat.label}>
+                                <CardHeader>
+                                    <CardDescription>{stat.label}</CardDescription>
+                                    <CardTitle className="text-2xl tabular-nums">{stat.value}</CardTitle>
+                                </CardHeader>
+                            </Card>
+                        ))}
+                    </section>
+                </div>
 
                 <Card>
                     <CardHeader>
