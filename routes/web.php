@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\BaanController;
 use App\Http\Controllers\ClockController;
 use App\Http\Controllers\DashboardController;
@@ -28,6 +29,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/banen/{baan}', [BaanController::class, 'destroy'])->name('banen.destroy');
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', AdminDashboardController::class)->name('dashboard');
 });
 
 require __DIR__.'/settings.php';
