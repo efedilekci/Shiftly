@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HourEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -92,11 +93,28 @@ class ClockController extends Controller
                 throw ValidationException::withMessages(['break_minutes' => 'De pauze moet korter zijn dan de dienst.']);
             }
             $start = CarbonImmutable::createFromTimestampUTC($clock->started_at)->setTimezone(config('app.timezone'));
+            $workDate = $start->toDateString();
+            $startTime = $start->format('H:i');
+            $endTime = $end->format('H:i');
+            $overlap = HourEntry::findOverlapping($user->id, $workDate, $startTime, $endTime);
+
+            if ($overlap !== null) {
+                throw ValidationException::withMessages([
+                    'clock' => sprintf(
+                        'Deze dienst overlapt met %s op %s (%s–%s). Pas of verwijder die registratie eerst.',
+                        $overlap->baan_name,
+                        $overlap->work_date->format('d-m-Y'),
+                        substr((string) $overlap->start_time, 0, 5),
+                        substr((string) $overlap->end_time, 0, 5),
+                    ),
+                ]);
+            }
+
             $user->hourEntries()->create([
                 'baan_id' => $clock->baan_id,
                 'baan_name' => $clock->baan_name,
                 'hourly_wage' => $clock->hourly_wage,
-                'work_date' => $start->toDateString(),
+                'work_date' => $workDate,
                 'start_time' => $start->format('H:i:s'),
                 'end_time' => $end->format('H:i:s'),
                 'break_minutes' => (int) $data['break_minutes'],

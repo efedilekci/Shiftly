@@ -91,8 +91,12 @@ class HourEntryTest extends TestCase
             ->assertSessionHasNoErrors()->assertRedirect('/uren');
         $this->assertSame(465, HourEntry::firstOrFail()->duration_minutes);
 
-        $this->post('/uren', $this->entryData($baan, ['start_time' => '23:59', 'end_time' => '00:00', 'break_minutes' => 0]))
-            ->assertSessionHasNoErrors()->assertRedirect('/uren');
+        $this->post('/uren', $this->entryData($baan, [
+            'work_date' => '2026-10-20',
+            'start_time' => '23:59',
+            'end_time' => '00:00',
+            'break_minutes' => 0,
+        ]))->assertSessionHasNoErrors()->assertRedirect('/uren');
         $this->assertSame(1, HourEntry::latest('id')->firstOrFail()->duration_minutes);
     }
 
@@ -135,6 +139,54 @@ class HourEntryTest extends TestCase
         $this->assertDatabaseCount('hour_entries', 0);
     }
 
+    public function test_overlapping_hours_are_rejected_but_adjacent_hours_are_allowed(): void
+    {
+        $user = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+        $this->actingAs($user)->post('/uren', $this->entryData($baan, [
+            'start_time' => '09:00',
+            'end_time' => '13:00',
+            'break_minutes' => 0,
+        ]))->assertSessionHasNoErrors()->assertRedirect('/uren');
+
+        $this->from('/uren')->post('/uren', $this->entryData($baan, [
+            'start_time' => '12:00',
+            'end_time' => '16:00',
+            'break_minutes' => 0,
+        ]))->assertRedirect('/uren')->assertSessionHasErrors('start_time');
+
+        $this->assertDatabaseCount('hour_entries', 1);
+
+        $this->post('/uren', $this->entryData($baan, [
+            'start_time' => '13:00',
+            'end_time' => '17:00',
+            'break_minutes' => 0,
+        ]))->assertSessionHasNoErrors()->assertRedirect('/uren');
+
+        $this->assertDatabaseCount('hour_entries', 2);
+    }
+
+    public function test_overnight_hours_overlap_the_next_morning(): void
+    {
+        $user = User::factory()->create();
+        $baan = $user->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.00']);
+        $this->actingAs($user)->post('/uren', $this->entryData($baan, [
+            'work_date' => '2026-10-19',
+            'start_time' => '22:00',
+            'end_time' => '06:00',
+            'break_minutes' => 0,
+        ]))->assertSessionHasNoErrors()->assertRedirect('/uren');
+
+        $this->from('/uren')->post('/uren', $this->entryData($baan, [
+            'work_date' => '2026-10-20',
+            'start_time' => '05:00',
+            'end_time' => '08:00',
+            'break_minutes' => 0,
+        ]))->assertRedirect('/uren')->assertSessionHasErrors('start_time');
+
+        $this->assertDatabaseCount('hour_entries', 1);
+    }
+
     public function test_optional_notes_are_trimmed_and_limited(): void
     {
         $user = User::factory()->create();
@@ -150,13 +202,17 @@ class HourEntryTest extends TestCase
             ->component('uren/index')
             ->where('entries.0.note', 'Avonddienst'));
 
-        $this->post('/uren', $this->entryData($baan, ['note' => '']))
-            ->assertSessionHasNoErrors()
+        $this->post('/uren', $this->entryData($baan, [
+            'work_date' => '2026-10-20',
+            'note' => '',
+        ]))->assertSessionHasNoErrors()
             ->assertRedirect('/uren');
         $this->assertNull(HourEntry::latest('id')->firstOrFail()->note);
 
-        $this->from('/uren')->post('/uren', $this->entryData($baan, ['note' => str_repeat('a', 501)]))
-            ->assertRedirect('/uren')
+        $this->from('/uren')->post('/uren', $this->entryData($baan, [
+            'work_date' => '2026-10-21',
+            'note' => str_repeat('a', 501),
+        ]))->assertRedirect('/uren')
             ->assertSessionHasErrors('note');
     }
 

@@ -147,4 +147,38 @@ class UpdateHourEntryTest extends TestCase
     {
         $this->actingAs(User::factory()->create())->put('/uren/999999', [])->assertNotFound();
     }
+
+    public function test_updates_that_overlap_another_registration_are_rejected(): void
+    {
+        $user = User::factory()->create();
+        $first = $this->createEntry($user);
+        $second = $user->hourEntries()->create([
+            'baan_id' => $first->baan_id,
+            'baan_name' => $first->baan_name,
+            'hourly_wage' => $first->hourly_wage,
+            'work_date' => '2026-10-19',
+            'start_time' => '18:00',
+            'end_time' => '20:00',
+            'break_minutes' => 0,
+            'duration_minutes' => 120,
+        ]);
+
+        $this->actingAs($user)->from('/uren')->put(route('uren.update', $second), [
+            'baan_id' => $second->baan_id,
+            'work_date' => '2026-10-19',
+            'start_time' => '16:00',
+            'end_time' => '19:00',
+            'break_minutes' => 0,
+        ])->assertRedirect('/uren')->assertSessionHasErrors('start_time');
+
+        $this->assertSame('18:00', substr($second->fresh()->start_time, 0, 5));
+
+        $this->put(route('uren.update', $first), [
+            'baan_id' => $first->baan_id,
+            'work_date' => '2026-10-19',
+            'start_time' => '10:00',
+            'end_time' => '16:00',
+            'break_minutes' => 0,
+        ])->assertSessionHasNoErrors()->assertRedirect('/uren');
+    }
 }

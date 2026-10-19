@@ -141,6 +141,27 @@ class ClockTest extends TestCase
         $this->assertDatabaseCount('hour_entries', 0);
     }
 
+    public function test_clocking_out_is_rejected_when_it_overlaps_existing_hours(): void
+    {
+        $user = User::factory()->create();
+        $baan = $this->startClock($user);
+        $user->hourEntries()->create([
+            'baan_id' => $baan->id,
+            'baan_name' => $baan->name,
+            'hourly_wage' => $baan->hourly_wage,
+            'work_date' => '2026-10-19',
+            'start_time' => '12:00',
+            'end_time' => '14:00',
+            'break_minutes' => 0,
+            'duration_minutes' => 120,
+        ]);
+        $this->travel(8)->hours();
+
+        $this->post('/klok/uit', ['break_minutes' => 0])->assertSessionHasErrors('clock');
+        $this->assertDatabaseCount('running_clocks', 1);
+        $this->assertDatabaseCount('hour_entries', 1);
+    }
+
     public function test_an_overnight_clock_uses_the_start_date(): void
     {
         $this->startClock(User::factory()->create());

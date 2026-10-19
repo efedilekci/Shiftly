@@ -47,12 +47,45 @@ class StoreHourEntryRequest extends FormRequest
                 return;
             }
 
-            $minutes = HourEntry::grossMinutes($this->string('start_time')->toString(), $this->string('end_time')->toString());
+            $startTime = $this->string('start_time')->toString();
+            $endTime = $this->string('end_time')->toString();
+            $minutes = HourEntry::grossMinutes($startTime, $endTime);
 
             if ($minutes === 0) {
                 $validator->errors()->add('end_time', 'De begin- en eindtijd mogen niet gelijk zijn.');
-            } elseif ((int) $this->input('break_minutes') >= $minutes) {
+
+                return;
+            }
+
+            if ((int) $this->input('break_minutes') >= $minutes) {
                 $validator->errors()->add('break_minutes', 'De pauze moet korter zijn dan de dienst.');
+
+                return;
+            }
+
+            $ignoreId = $this->route('hourEntry') instanceof HourEntry
+                ? $this->route('hourEntry')->id
+                : null;
+
+            $overlap = HourEntry::findOverlapping(
+                (int) $this->user()->id,
+                $this->string('work_date')->toString(),
+                $startTime,
+                $endTime,
+                $ignoreId,
+            );
+
+            if ($overlap !== null) {
+                $validator->errors()->add(
+                    'start_time',
+                    sprintf(
+                        'Deze tijden overlappen met %s op %s (%s–%s).',
+                        $overlap->baan_name,
+                        $overlap->work_date->format('d-m-Y'),
+                        substr((string) $overlap->start_time, 0, 5),
+                        substr((string) $overlap->end_time, 0, 5),
+                    ),
+                );
             }
         }];
     }
