@@ -137,7 +137,7 @@ class DashboardTest extends TestCase
             'break_minutes' => 0,
         ])->assertRedirect('/uren');
 
-        // Previous month — must not count.
+        // Previous month: must not count.
         $this->actingAs($user)->post('/uren', [
             'baan_id' => $baan->id,
             'work_date' => '2026-09-30',
@@ -146,7 +146,7 @@ class DashboardTest extends TestCase
             'break_minutes' => 0,
         ])->assertRedirect('/uren');
 
-        // Other user's entry — must not count.
+        // Other user's entry: must not count.
         $this->actingAs($other)->post('/uren', [
             'baan_id' => $otherBaan->id,
             'work_date' => '2026-10-10',

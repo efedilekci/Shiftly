@@ -77,7 +77,7 @@ const columns = helper.columns([
         enableSorting: false,
         cell: ({ getValue }) => {
             const note = getValue();
-            if (!note) return <span className="text-muted-foreground">—</span>;
+            if (!note) return <span className="text-muted-foreground">-</span>;
 
             return <span className="block max-w-48 [overflow-wrap:anywhere] whitespace-normal">{note}</span>;
         },

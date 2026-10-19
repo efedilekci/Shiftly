@@ -46,7 +46,7 @@ const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: '
 const dateFormat = new Intl.DateTimeFormat('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 function formatDate(value: string | null): string {
-    if (!value) return '—';
+    if (!value) return '-';
     const [year, month, day] = value.split('-').map(Number);
 
     return dateFormat.format(new Date(year, month - 1, day));
