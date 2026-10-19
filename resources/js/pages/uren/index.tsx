@@ -1,5 +1,5 @@
-import CreateHourEntryDialog from '@/components/uren/create-hour-entry-dialog';
 import HoursDataTable from '@/components/uren/data-table';
+import HourEntryDialog from '@/components/uren/hour-entry-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type Baan } from '@/types/baan';
@@ -15,7 +15,7 @@ export default function Uren({ entries, banen, today, status }: { entries: HourE
             <div className="mx-auto w-full max-w-6xl space-y-6 px-5 py-8 sm:p-10">
                 <header className="flex flex-wrap items-center justify-between gap-4">
                     <h1 className="text-3xl font-semibold tracking-tight">Uren</h1>
-                    <CreateHourEntryDialog banen={banen} today={today} />
+                    <HourEntryDialog banen={banen} today={today} />
                 </header>
                 {status && (
                     <p role="status" className="text-primary text-sm">
@@ -30,7 +30,7 @@ export default function Uren({ entries, banen, today, status }: { entries: HourE
                         om uren te registreren.
                     </p>
                 )}
-                <HoursDataTable entries={entries} />
+                <HoursDataTable entries={entries} banen={banen} today={today} />
             </div>
         </AppLayout>
     );

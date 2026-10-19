@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import HourEntryDialog from '@/components/uren/hour-entry-dialog';
+import { type Baan } from '@/types/baan';
 import { type HourEntry } from '@/types/hour-entry';
 import {
     columnFilteringFeature,
@@ -68,7 +70,7 @@ const columns = helper.columns([
     }),
 ]);
 
-export default function HoursDataTable({ entries }: { entries: HourEntry[] }) {
+export default function HoursDataTable({ entries, banen, today }: { entries: HourEntry[]; banen: Baan[]; today: string }) {
     const table = useTable({ features, data: entries, columns, getRowId: (entry) => String(entry.id) });
     return (
         <div className="space-y-4">
@@ -80,7 +82,16 @@ export default function HoursDataTable({ entries }: { entries: HourEntry[] }) {
                 onChange={(event) => table.getColumn('baan_name')?.setFilterValue(event.target.value)}
             />
             <div className="bg-card overflow-hidden rounded-xl border">
-                <Table aria-label="Mijn uren" className="min-w-[42rem]">
+                <Table aria-label="Mijn uren" className="min-w-[48rem] table-fixed">
+                    <colgroup>
+                        <col className="w-32" />
+                        <col />
+                        <col className="w-24" />
+                        <col className="w-32" />
+                        <col className="w-24" />
+                        <col className="w-28" />
+                        <col className="w-16" />
+                    </colgroup>
                     <TableHeader>
                         {table.getHeaderGroups().map((group) => (
                             <TableRow key={group.id}>
@@ -108,6 +119,9 @@ export default function HoursDataTable({ entries }: { entries: HourEntry[] }) {
                                         </Button>
                                     </TableHead>
                                 ))}
+                                <TableHead scope="col">
+                                    <span className="sr-only">Acties</span>
+                                </TableHead>
                             </TableRow>
                         ))}
                     </TableHeader>
@@ -120,11 +134,14 @@ export default function HoursDataTable({ entries }: { entries: HourEntry[] }) {
                                             <table.FlexRender cell={cell} />
                                         </TableCell>
                                     ))}
+                                    <TableCell className="px-3 py-4 text-right">
+                                        <HourEntryDialog entry={row.original} banen={banen} today={today} />
+                                    </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="text-muted-foreground h-24 text-center">
+                                <TableCell colSpan={columns.length + 1} className="text-muted-foreground h-24 text-center">
                                     {entries.length ? 'Geen registraties gevonden.' : 'Je hebt nog geen uren geregistreerd.'}
                                 </TableCell>
                             </TableRow>

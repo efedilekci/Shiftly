@@ -13,23 +13,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { type Baan } from '@/types/baan';
+import { type HourEntry } from '@/types/hour-entry';
 import { useForm } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { type FormEventHandler, useId, useRef, useState } from 'react';
 
-export default function CreateHourEntryDialog({ banen, today }: { banen: Baan[]; today: string }) {
+export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]; today: string; entry?: HourEntry }) {
     const [open, setOpen] = useState(false);
     const fieldId = useId();
     const baanInput = useRef<HTMLSelectElement>(null);
     const form = useRef<HTMLFormElement>(null);
     const initialData = {
-        baan_id: banen.length === 1 ? String(banen[0].id) : '',
-        work_date: today,
-        start_time: '',
-        end_time: '',
-        break_minutes: '0',
+        baan_id: entry ? String(entry.baan_id ?? '') : banen.length === 1 ? String(banen[0].id) : '',
+        work_date: entry?.work_date ?? today,
+        start_time: entry?.start_time ?? '',
+        end_time: entry?.end_time ?? '',
+        break_minutes: String(entry?.break_minutes ?? 0),
     };
-    const { data, setData, post, errors, processing, reset, clearErrors } = useForm(initialData);
+    const { data, setData, submit: send, errors, processing, reset, clearErrors } = useForm(initialData);
     const overnight = data.start_time !== '' && data.end_time !== '' && data.end_time < data.start_time;
     const duration = (() => {
         if (
@@ -53,10 +54,10 @@ export default function CreateHourEntryDialog({ banen, today }: { banen: Baan[];
         }
         setOpen(nextOpen);
     };
-    const submit: FormEventHandler = (event) => {
+    const handleSubmit: FormEventHandler = (event) => {
         event.preventDefault();
         if (processing) return;
-        post(route('uren.store'), {
+        send(entry ? 'put' : 'post', entry ? route('uren.update', entry.id) : route('uren.store'), {
             preserveScroll: true,
             onSuccess: () => {
                 setOpen(false);
@@ -71,16 +72,25 @@ export default function CreateHourEntryDialog({ banen, today }: { banen: Baan[];
     };
     return (
         <Dialog open={open} onOpenChange={changeOpen}>
-            <DialogTrigger render={<Button disabled={banen.length === 0} />}>
-                <Plus aria-hidden="true" />
-                Uren toevoegen
-            </DialogTrigger>
+            {entry ? (
+                <DialogTrigger
+                    render={<Button type="button" variant="ghost" size="icon" />}
+                    aria-label={`Uren wijzigen: ${entry.baan_name}, ${entry.work_date}`}
+                >
+                    <Pencil aria-hidden="true" />
+                </DialogTrigger>
+            ) : (
+                <DialogTrigger render={<Button disabled={banen.length === 0} />}>
+                    <Plus aria-hidden="true" />
+                    Uren toevoegen
+                </DialogTrigger>
+            )}
             <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg" initialFocus={baanInput}>
                 <DialogHeader>
-                    <DialogTitle>Uren toevoegen</DialogTitle>
+                    <DialogTitle>{entry ? 'Uren wijzigen' : 'Uren toevoegen'}</DialogTitle>
                     <DialogDescription className="sr-only">Registreer een dienst met begin- en eindtijd en pauze.</DialogDescription>
                 </DialogHeader>
-                <form ref={form} onSubmit={submit} className="grid gap-5 pt-2" aria-busy={processing}>
+                <form ref={form} onSubmit={handleSubmit} className="grid gap-5 pt-2" aria-busy={processing}>
                     <div className="grid gap-2">
                         <Label htmlFor={`${fieldId}-baan`}>Baan</Label>
                         <select
@@ -88,19 +98,23 @@ export default function CreateHourEntryDialog({ banen, today }: { banen: Baan[];
                             id={`${fieldId}-baan`}
                             name="baan_id"
                             className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm disabled:opacity-50"
-                            required
+                            required={!entry || entry.baan_id !== null}
                             value={data.baan_id}
                             onChange={(event) => setData('baan_id', event.target.value)}
                             disabled={processing}
                             aria-invalid={!!errors.baan_id}
                             aria-describedby={errors.baan_id ? `${fieldId}-baan-error` : undefined}
                         >
-                            <option value="" disabled>
-                                Kies een baan
-                            </option>
+                            {entry && entry.baan_id === null ? (
+                                <option value="">{entry.baan_name} (verwijderd)</option>
+                            ) : (
+                                <option value="" disabled>
+                                    Kies een baan
+                                </option>
+                            )}
                             {banen.map((baan) => (
                                 <option key={baan.id} value={baan.id}>
-                                    {baan.name}
+                                    {entry?.baan_id === baan.id ? entry.baan_name : baan.name}
                                 </option>
                             ))}
                         </select>

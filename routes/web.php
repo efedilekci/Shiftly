@@ -12,6 +12,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/uren', [HourEntryController::class, 'index'])->name('uren.index');
     Route::post('/uren', [HourEntryController::class, 'store'])->name('uren.store');
+    Route::put('/uren/{hourEntry}', [HourEntryController::class, 'update'])->name('uren.update');
 
     Route::get('/banen', [BaanController::class, 'index'])->name('banen.index');
     Route::post('/banen', [BaanController::class, 'store'])->name('banen.store');
