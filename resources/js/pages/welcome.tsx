@@ -1,6 +1,7 @@
 import AeroShards from '@/components/backgrounds/AeroShards';
 import CardNav, { type CardNavItem } from '@/components/CardNav';
 import MagicBento, { type MagicBentoItem } from '@/components/MagicBento';
+import Footer02 from '@/components/ui/footer-02';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
@@ -244,23 +245,9 @@ export default function Welcome() {
                     </div>
                 </section>
 
-                <section className="bg-background relative z-10 border-t">
-                    <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-20 sm:px-10 sm:py-28">
-                        <h2 className="font-display max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-                            Klaar om je uren scherp te houden?
-                        </h2>
-                        <p className="text-muted-foreground max-w-xl text-base leading-relaxed sm:text-lg">
-                            Maak gratis een account en start meteen met inklokken.
-                        </p>
-                        <Link
-                            href={primaryHref}
-                            className="bg-primary text-primary-foreground inline-flex min-h-12 items-center gap-3 rounded-xl px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90"
-                        >
-                            {auth.user ? 'Naar je dashboard' : 'Begin gratis'}
-                            <ArrowRight size={18} aria-hidden="true" />
-                        </Link>
-                    </div>
-                </section>
+                <div className="bg-background relative z-10">
+                    <Footer02 />
+                </div>
             </div>
         </>
     );
