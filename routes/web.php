@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\BaanController;
 use App\Http\Controllers\ClockController;
 use App\Http\Controllers\DashboardController;
@@ -33,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
 });
 
 require __DIR__.'/settings.php';
