@@ -21,11 +21,6 @@ const footerNavItems: NavItem[] = [
         url: 'https://github.com/efedilekci/Shiftly',
         icon: Folder,
     },
-    {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
-    },
 ];
 
 export function AppSidebar() {
