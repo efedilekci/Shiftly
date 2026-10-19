@@ -37,6 +37,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 });
 
 require __DIR__.'/settings.php';

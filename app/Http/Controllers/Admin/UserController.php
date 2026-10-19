@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\DeleteUserRequest;
 use App\Http\Requests\Admin\UpdateUserRoleRequest;
 use App\Models\HourEntry;
 use App\Models\User;
@@ -31,7 +32,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function show(User $user): Response
+    public function show(Request $request, User $user): Response
     {
         $entries = $user->hourEntries()
             ->orderByDesc('work_date')
@@ -74,6 +75,8 @@ class UserController extends Controller
                     'note' => $entry->note,
                 ])
                 ->values(),
+            'can_delete' => $this->canDeleteUser($request->user(), $user),
+            'delete_blocked_reason' => $this->deleteBlockedReason($request->user(), $user),
         ]);
     }
 
@@ -83,5 +86,31 @@ class UserController extends Controller
         $user->save();
 
         return to_route('admin.users.index')->with('status', 'Rol bijgewerkt.');
+    }
+
+    public function destroy(DeleteUserRequest $request, User $user): RedirectResponse
+    {
+        $name = $user->name;
+        $user->delete();
+
+        return to_route('admin.users.index')->with('status', "{$name} is verwijderd.");
+    }
+
+    private function canDeleteUser(?User $actor, User $user): bool
+    {
+        return $this->deleteBlockedReason($actor, $user) === null;
+    }
+
+    private function deleteBlockedReason(?User $actor, User $user): ?string
+    {
+        if ($actor?->is($user)) {
+            return 'Je kunt jezelf niet verwijderen.';
+        }
+
+        if ($user->role === Role::Admin && User::query()->where('role', Role::Admin)->count() <= 1) {
+            return 'Er moet minstens één admin overblijven.';
+        }
+
+        return null;
     }
 }

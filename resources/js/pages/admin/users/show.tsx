@@ -1,7 +1,8 @@
+import DeleteAdminUserDialog from '@/components/admin/delete-user-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AdminLayout from '@/layouts/admin-layout';
 import type { Role } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
 type AdminUser = {
@@ -60,12 +61,18 @@ export default function AdminUserShow({
     stats,
     banen,
     recent_entries,
+    can_delete,
+    delete_blocked_reason,
 }: {
     user: AdminUser;
     stats: Stats;
     banen: BaanRow[];
     recent_entries: RecentEntry[];
+    can_delete: boolean;
+    delete_blocked_reason: string | null;
 }) {
+    const { errors } = usePage().props as { errors?: Record<string, string> };
+
     return (
         <AdminLayout title={user.name}>
             <div className="space-y-8">
@@ -82,6 +89,12 @@ export default function AdminUserShow({
                         <h1 className="font-display text-3xl font-semibold tracking-tight">{user.name}</h1>
                         <p className="text-muted-foreground text-sm tabular-nums">{user.email}</p>
                     </header>
+
+                    {errors?.user && (
+                        <p role="alert" className="text-destructive text-sm">
+                            {errors.user}
+                        </p>
+                    )}
 
                     <dl className="text-sm sm:flex sm:flex-wrap sm:gap-x-8 sm:gap-y-2">
                         <div className="flex gap-2">
@@ -186,6 +199,15 @@ export default function AdminUserShow({
                             </TableBody>
                         </Table>
                     </div>
+                </section>
+
+                <section className="space-y-3 border-t pt-6">
+                    <h2 className="font-display text-xl font-semibold tracking-tight">Gevaarlijke zone</h2>
+                    {can_delete ? (
+                        <DeleteAdminUserDialog user={{ id: user.id, name: user.name }} />
+                    ) : (
+                        <p className="text-muted-foreground text-sm">{delete_blocked_reason}</p>
+                    )}
                 </section>
             </div>
         </AdminLayout>

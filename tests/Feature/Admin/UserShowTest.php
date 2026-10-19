@@ -59,6 +59,8 @@ class UserShowTest extends TestCase
                 ->where('banen.0.name', 'Winkel')
                 ->has('recent_entries', 1)
                 ->where('recent_entries.0.baan_name', 'Winkel')
-                ->where('recent_entries.0.duration_minutes', 450));
+                ->where('recent_entries.0.duration_minutes', 450)
+                ->where('can_delete', true)
+                ->where('delete_blocked_reason', null));
     }
 }

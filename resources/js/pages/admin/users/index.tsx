@@ -60,10 +60,15 @@ function RoleSelect({ user }: { user: AdminUserRow }) {
 
 export default function AdminUsersIndex({ users, status }: { users: AdminUserRow[]; status?: string }) {
     const fieldId = useId();
-    const { errors } = usePage().props as { errors?: Record<string, string> };
+    const { errors, flash } = usePage().props as {
+        errors?: Record<string, string>;
+        flash?: { status?: string | null };
+    };
     const [filters, setFilters] = useState<AdminUserFilters>({ search: '', role: '' });
     const filteredUsers = useMemo(() => filterAdminUsers(users, filters), [users, filters]);
     const hasFilters = Boolean(filters.search.trim() || filters.role);
+    const statusMessage = status ?? flash?.status ?? null;
+    const errorMessage = errors?.user ?? errors?.role ?? null;
 
     return (
         <AdminLayout title="Gebruikers">
@@ -71,17 +76,6 @@ export default function AdminUsersIndex({ users, status }: { users: AdminUserRow
                 <header>
                     <h1 className="font-display text-3xl font-semibold tracking-tight">Gebruikers</h1>
                 </header>
-
-                {status && (
-                    <p role="status" className="text-primary text-sm">
-                        {status}
-                    </p>
-                )}
-                {errors?.role && (
-                    <p role="alert" className="text-destructive text-sm">
-                        {errors.role}
-                    </p>
-                )}
 
                 <div className="space-y-3">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -109,7 +103,7 @@ export default function AdminUsersIndex({ users, status }: { users: AdminUserRow
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm" role="status">
+                        <p className="text-sm">
                             <span className="font-semibold tabular-nums">{filteredUsers.length}</span>
                             <span className="text-muted-foreground">
                                 {' '}
@@ -127,6 +121,17 @@ export default function AdminUsersIndex({ users, status }: { users: AdminUserRow
                         </Button>
                     </div>
                 </div>
+
+                {statusMessage && (
+                    <p role="status" className="border-border bg-muted/40 rounded-xl border px-4 py-3 text-sm">
+                        {statusMessage}
+                    </p>
+                )}
+                {errorMessage && (
+                    <p role="alert" className="border-destructive/30 bg-destructive/10 text-destructive rounded-xl border px-4 py-3 text-sm">
+                        {errorMessage}
+                    </p>
+                )}
 
                 <div className="bg-card overflow-hidden rounded-xl border">
                     <Table aria-label="Gebruikers">
