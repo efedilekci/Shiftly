@@ -1,4 +1,5 @@
-﻿// @ts-nocheck
+﻿/* eslint-disable @typescript-eslint/ban-ts-comment -- WebGPU shader demo; typed gradually */
+// @ts-nocheck
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { prepareShader } from '@vgpu/wgsl/prepare';
 import { draw, effect, frame, init, sampler, storage, surface, target, uniforms } from 'vgpu';

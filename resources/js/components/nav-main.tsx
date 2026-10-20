@@ -31,9 +31,10 @@ function NavLink({ item }: { item: NavItem & { exact?: boolean; badge?: number }
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage<SharedData>();
-    const companies = page.props.companies ?? [];
 
     const companySections = useMemo(() => {
+        const companies = page.props.companies ?? [];
+
         return companies.map((company) => {
             const items: Array<NavItem & { exact?: boolean; badge?: number }> = [
                 {
@@ -68,7 +69,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                 items,
             };
         });
-    }, [companies]);
+    }, [page.props.companies]);
 
     return (
         <>
