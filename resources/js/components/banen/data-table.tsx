@@ -49,12 +49,15 @@ const columns = columnHelper.columns([
         id: 'actions',
         header: () => <span className="sr-only">Acties</span>,
         enableSorting: false,
-        cell: ({ row }) => (
-            <div className="flex items-center justify-end gap-1">
-                <BaanDialog baan={row.original} />
-                <DeleteBaanDialog baan={row.original} />
-            </div>
-        ),
+        cell: ({ row }) =>
+            row.original.is_company_baan ? (
+                <span className="text-muted-foreground text-xs">Door bedrijf</span>
+            ) : (
+                <div className="flex items-center justify-end gap-1">
+                    <BaanDialog baan={row.original} />
+                    <DeleteBaanDialog baan={row.original} />
+                </div>
+            ),
     }),
 ]);
 

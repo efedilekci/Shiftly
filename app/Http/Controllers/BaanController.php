@@ -15,7 +15,16 @@ class BaanController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render('banen/index', [
-            'banen' => $request->user()->banen()->orderBy('name')->orderBy('id')->get(['id', 'name', 'hourly_wage']),
+            'banen' => $request->user()->banen()
+                ->orderBy('name')
+                ->orderBy('id')
+                ->get(['id', 'name', 'hourly_wage', 'company_id'])
+                ->map(fn (Baan $baan) => [
+                    'id' => $baan->id,
+                    'name' => $baan->name,
+                    'hourly_wage' => $baan->hourly_wage,
+                    'is_company_baan' => $baan->isCompanyBaan(),
+                ]),
             'status' => $request->session()->get('status'),
         ]);
     }
@@ -29,6 +38,14 @@ class BaanController extends Controller
 
     public function update(UpdateBaanRequest $request, Baan $baan): RedirectResponse
     {
+        abort_unless($baan->user_id === $request->user()->id, 403);
+
+        if ($baan->isCompanyBaan()) {
+            return to_route('banen.index')->withErrors([
+                'baan' => 'Het uurloon van een bedrijfsbaan wordt door het bedrijf ingesteld.',
+            ]);
+        }
+
         $baan->update($request->validated());
 
         return to_route('banen.index')->with('status', 'Baan bijgewerkt.');

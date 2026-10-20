@@ -2,11 +2,10 @@ import DeleteMemberDialog from '@/components/company/delete-member-dialog';
 import InviteMemberDialog from '@/components/company/invite-member-dialog';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
 type Company = { id: number; name: string; slug: string };
 
@@ -24,6 +23,7 @@ type Member = {
     email: string;
     role: string;
     role_label: string;
+    hourly_wage: string | null;
     month_minutes: number | null;
 };
 
@@ -38,8 +38,16 @@ type Invitation = {
 
 type RoleOption = { value: string; label: string };
 
+const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
+
 function formatDuration(minutes: number): string {
     return `${Math.floor(minutes / 60)}u ${String(minutes % 60).padStart(2, '0')}m`;
+}
+
+function formatWage(value: string | null): string {
+    if (value === null) return '-';
+
+    return currency.format(Number(value));
 }
 
 export default function CompanyMembersIndex({
@@ -48,14 +56,12 @@ export default function CompanyMembersIndex({
     members,
     invitations = [],
     inviteRoles = [],
-    assignableRoles = [],
 }: {
     company: Company;
     membership: Membership;
     members: Member[];
     invitations?: Invitation[];
     inviteRoles?: RoleOption[];
-    assignableRoles?: RoleOption[];
 }) {
     const page = usePage<{
         flash?: { status?: string | null };
@@ -67,6 +73,8 @@ export default function CompanyMembersIndex({
         { title: company.name, href: `/bedrijf/${company.slug}` },
         { title: 'Medewerkers', href: `/bedrijf/${company.slug}/medewerkers` },
     ];
+
+    const showWage = membership.can_manage_members || membership.can_view_hours;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -96,13 +104,14 @@ export default function CompanyMembersIndex({
                                 <TableHead>Naam</TableHead>
                                 <TableHead>E-mail</TableHead>
                                 <TableHead>Rol</TableHead>
+                                {showWage && <TableHead className="text-right">Uurloon</TableHead>}
                                 {membership.can_view_hours && <TableHead className="text-right">Uren deze maand</TableHead>}
                                 {membership.can_manage_members && <TableHead className="text-right">Acties</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {members.map((member) => {
-                                const canEdit =
+                                const canDelete =
                                     membership.can_manage_members &&
                                     member.role !== 'owner' &&
                                     member.user_id !== page.props.auth.user.id;
@@ -111,33 +120,10 @@ export default function CompanyMembersIndex({
                                     <TableRow key={member.id}>
                                         <TableCell className="font-medium">{member.name}</TableCell>
                                         <TableCell>{member.email}</TableCell>
-                                        <TableCell>
-                                            {canEdit ? (
-                                                <Select
-                                                    value={member.role}
-                                                    onValueChange={(value) =>
-                                                        router.patch(
-                                                            route('company.members.role', [company.slug, member.id]),
-                                                            { role: value },
-                                                            { preserveScroll: true },
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger className="w-[160px]" aria-label={`Rol van ${member.name}`}>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {assignableRoles.map((role) => (
-                                                            <SelectItem key={role.value} value={role.value}>
-                                                                {role.label}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            ) : (
-                                                member.role_label
-                                            )}
-                                        </TableCell>
+                                        <TableCell>{member.role_label}</TableCell>
+                                        {showWage && (
+                                            <TableCell className="text-right tabular-nums">{formatWage(member.hourly_wage)}</TableCell>
+                                        )}
                                         {membership.can_view_hours && (
                                             <TableCell className="text-right tabular-nums">
                                                 {member.month_minutes === null ? '-' : formatDuration(member.month_minutes)}
@@ -145,15 +131,20 @@ export default function CompanyMembersIndex({
                                         )}
                                         {membership.can_manage_members && (
                                             <TableCell className="text-right">
-                                                {canEdit ? (
-                                                    <DeleteMemberDialog
-                                                        companySlug={company.slug}
-                                                        memberId={member.id}
-                                                        memberName={member.name}
-                                                    />
-                                                ) : (
-                                                    <span className="text-muted-foreground text-sm">-</span>
-                                                )}
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <Link href={route('company.members.edit', [company.slug, member.id])}>
+                                                            Bewerken
+                                                        </Link>
+                                                    </Button>
+                                                    {canDelete ? (
+                                                        <DeleteMemberDialog
+                                                            companySlug={company.slug}
+                                                            memberId={member.id}
+                                                            memberName={member.name}
+                                                        />
+                                                    ) : null}
+                                                </div>
                                             </TableCell>
                                         )}
                                     </TableRow>

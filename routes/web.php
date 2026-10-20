@@ -49,6 +49,8 @@ Route::middleware(['auth'])->group(function () {
         });
 
         Route::middleware('company.owner')->group(function () {
+            Route::get('/medewerkers/{member}', [CompanyMemberController::class, 'edit'])->name('members.edit');
+            Route::put('/medewerkers/{member}', [CompanyMemberController::class, 'update'])->name('members.update');
             Route::patch('/medewerkers/{member}/rol', [CompanyMemberController::class, 'updateRole'])->name('members.role');
             Route::delete('/medewerkers/{member}', [CompanyMemberController::class, 'destroy'])->name('members.destroy');
         });

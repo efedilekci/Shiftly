@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Company;
 
 use App\Enums\CompanyMemberRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Company\UpdateCompanyMemberRequest;
 use App\Http\Requests\Company\UpdateCompanyMemberRoleRequest;
+use App\Models\Baan;
 use App\Models\Company;
 use App\Models\CompanyMember;
 use App\Models\HourEntry;
@@ -23,12 +25,16 @@ class MemberController extends Controller
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
 
+        $hourlyWages = Baan::query()
+            ->where('company_id', $company->id)
+            ->pluck('hourly_wage', 'user_id');
+
         $members = $company->members()
             ->with('user:id,name,email')
             ->orderByRaw("CASE role WHEN 'owner' THEN 0 WHEN 'team_leader' THEN 1 ELSE 2 END")
             ->orderBy('created_at')
             ->get()
-            ->map(function (CompanyMember $member) use ($monthStart, $monthEnd, $membership, $company) {
+            ->map(function (CompanyMember $member) use ($monthStart, $monthEnd, $membership, $company, $hourlyWages) {
                 $minutes = $membership->role->canViewTeamHours()
                     ? (int) HourEntry::query()
                         ->where('user_id', $member->user_id)
@@ -44,6 +50,7 @@ class MemberController extends Controller
                     'email' => $member->user?->email,
                     'role' => $member->role->value,
                     'role_label' => $member->role->label(),
+                    'hourly_wage' => $hourlyWages[$member->user_id] ?? null,
                     'month_minutes' => $minutes,
                 ];
             });
@@ -83,6 +90,35 @@ class MemberController extends Controller
                     'label' => CompanyMemberRole::from($value)->label(),
                 ])
                 ->values(),
+        ]);
+    }
+
+    public function edit(Request $request, Company $company, CompanyMember $member): Response
+    {
+        abort_unless($member->company_id === $company->id, 404);
+
+        $member->loadMissing('user:id,name,email');
+        abort_unless($member->user !== null, 404);
+
+        $baan = $company->ensureBaanFor($member->user);
+        $canChangeRole = $member->role !== CompanyMemberRole::Owner
+            && $member->user_id !== $request->user()->id;
+
+        return Inertia::render('company/members/edit', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'slug' => $company->slug,
+            ],
+            'member' => [
+                'id' => $member->id,
+                'name' => $member->user?->name,
+                'email' => $member->user?->email,
+                'role' => $member->role->value,
+                'role_label' => $member->role->label(),
+                'hourly_wage' => $baan->hourly_wage,
+                'can_change_role' => $canChangeRole,
+            ],
             'assignableRoles' => collect(CompanyMemberRole::assignableValues())
                 ->map(fn (string $value) => [
                     'value' => $value,
@@ -90,6 +126,27 @@ class MemberController extends Controller
                 ])
                 ->values(),
         ]);
+    }
+
+    public function update(UpdateCompanyMemberRequest $request, Company $company, CompanyMember $member): RedirectResponse
+    {
+        abort_unless($member->company_id === $company->id, 404);
+        abort_unless($member->user !== null, 404);
+
+        $data = $request->validated();
+        $baan = $company->ensureBaanFor($member->user);
+
+        $baan->forceFill([
+            'hourly_wage' => $data['hourly_wage'],
+        ])->save();
+
+        if (array_key_exists('role', $data)) {
+            $member->forceFill([
+                'role' => $data['role'],
+            ])->save();
+        }
+
+        return to_route('company.members.index', $company)->with('status', 'Medewerker bijgewerkt.');
     }
 
     public function updateRole(UpdateCompanyMemberRoleRequest $request, Company $company, CompanyMember $member): RedirectResponse
