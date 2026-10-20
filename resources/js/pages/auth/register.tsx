@@ -8,20 +8,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { cn } from '@/lib/utils';
 
 type RegisterForm = {
+    account_type: 'personal' | 'company';
     name: string;
     email: string;
     password: string;
     password_confirmation: string;
+    company_name: string;
 };
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
+        account_type: 'personal',
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        company_name: '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -32,18 +37,62 @@ export default function Register() {
     };
 
     return (
-        <AuthLayout title="Maak je account aan" description="Vul je gegevens in om te starten met Shiftly.">
+        <AuthLayout title="Maak je account aan" description="Kies een persoonlijk account of registreer je bedrijf.">
             <Head title="Registreren" />
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="name">Naam</Label>
+                        <Label>Accounttype</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {(
+                                [
+                                    { value: 'personal', label: 'Persoonlijk' },
+                                    { value: 'company', label: 'Bedrijf' },
+                                ] as const
+                            ).map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => setData('account_type', option.value)}
+                                    className={cn(
+                                        'rounded-xl border px-3 py-2 text-sm transition-colors',
+                                        data.account_type === option.value
+                                            ? 'border-foreground bg-foreground text-background'
+                                            : 'border-border text-foreground hover:bg-muted/40',
+                                    )}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                        <InputError message={errors.account_type} />
+                    </div>
+
+                    {data.account_type === 'company' && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="company_name">Bedrijfsnaam</Label>
+                            <Input
+                                id="company_name"
+                                type="text"
+                                required
+                                tabIndex={1}
+                                value={data.company_name}
+                                onChange={(e) => setData('company_name', e.target.value)}
+                                disabled={processing}
+                                placeholder="Naam van je bedrijf"
+                            />
+                            <InputError message={errors.company_name} className="mt-2" />
+                        </div>
+                    )}
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="name">{data.account_type === 'company' ? 'Jouw naam' : 'Naam'}</Label>
                         <Input
                             id="name"
                             type="text"
                             required
-                            autoFocus
-                            tabIndex={1}
+                            autoFocus={data.account_type === 'personal'}
+                            tabIndex={2}
                             autoComplete="name"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
@@ -59,7 +108,7 @@ export default function Register() {
                             id="email"
                             type="email"
                             required
-                            tabIndex={2}
+                            tabIndex={3}
                             autoComplete="email"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
@@ -75,7 +124,7 @@ export default function Register() {
                             id="password"
                             type="password"
                             required
-                            tabIndex={3}
+                            tabIndex={4}
                             autoComplete="new-password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
@@ -91,7 +140,7 @@ export default function Register() {
                             id="password_confirmation"
                             type="password"
                             required
-                            tabIndex={4}
+                            tabIndex={5}
                             autoComplete="new-password"
                             value={data.password_confirmation}
                             onChange={(e) => setData('password_confirmation', e.target.value)}
@@ -101,15 +150,15 @@ export default function Register() {
                         <InputError message={errors.password_confirmation} />
                     </div>
 
-                    <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
+                    <Button type="submit" className="mt-2 w-full" tabIndex={6} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Account aanmaken
+                        {data.account_type === 'company' ? 'Bedrijfsaccount aanmaken' : 'Account aanmaken'}
                     </Button>
                 </div>
 
                 <div className="text-muted-foreground text-center text-sm">
                     Heb je al een account?{' '}
-                    <TextLink href={route('login')} tabIndex={6}>
+                    <TextLink href={route('login')} tabIndex={7}>
                         Inloggen
                     </TextLink>
                 </div>
