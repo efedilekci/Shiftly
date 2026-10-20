@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureCompanyMember;
+use App\Http\Middleware\EnsureCompanyOwner;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'company.member' => EnsureCompanyMember::class,
+            'company.owner' => EnsureCompanyOwner::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

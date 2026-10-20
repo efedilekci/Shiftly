@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\BaanController;
 use App\Http\Controllers\ClockController;
 use App\Http\Controllers\Company\DashboardController as CompanyDashboardController;
+use App\Http\Controllers\Company\InvitationController as CompanyInvitationController;
 use App\Http\Controllers\Company\MemberController as CompanyMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HourEntryController;
@@ -37,6 +38,11 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('bedrijf/{company}')->name('company.')->middleware('company.member')->group(function () {
         Route::get('/', CompanyDashboardController::class)->name('dashboard');
         Route::get('/medewerkers', [CompanyMemberController::class, 'index'])->name('members.index');
+
+        Route::middleware('company.owner')->group(function () {
+            Route::post('/uitnodigingen', [CompanyInvitationController::class, 'store'])->name('invitations.store');
+            Route::delete('/uitnodigingen/{invitation}', [CompanyInvitationController::class, 'destroy'])->name('invitations.destroy');
+        });
     });
 });
 

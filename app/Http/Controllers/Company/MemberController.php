@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Company;
 
+use App\Enums\CompanyMemberRole;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\CompanyMember;
@@ -44,6 +45,21 @@ class MemberController extends Controller
                 ];
             });
 
+        $invitations = $membership->role->canManageMembers()
+            ? $company->invitations()
+                ->whereNull('accepted_at')
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(fn ($invitation) => [
+                    'id' => $invitation->id,
+                    'email' => $invitation->email,
+                    'role' => $invitation->role->value,
+                    'role_label' => $invitation->role->label(),
+                    'expires_at' => $invitation->expires_at?->toIso8601String(),
+                    'is_expired' => $invitation->isExpired(),
+                ])
+            : [];
+
         return Inertia::render('company/members/index', [
             'company' => [
                 'id' => $company->id,
@@ -56,6 +72,13 @@ class MemberController extends Controller
                 'can_view_hours' => $membership->role->canViewTeamHours(),
             ],
             'members' => $members,
+            'invitations' => $invitations,
+            'assignableRoles' => collect(CompanyMemberRole::assignableValues())
+                ->map(fn (string $value) => [
+                    'value' => $value,
+                    'label' => CompanyMemberRole::from($value)->label(),
+                ])
+                ->values(),
         ]);
     }
 }
