@@ -28,7 +28,7 @@ class MemberController extends Controller
             ->orderByRaw("CASE role WHEN 'owner' THEN 0 WHEN 'team_leader' THEN 1 ELSE 2 END")
             ->orderBy('created_at')
             ->get()
-            ->map(function (CompanyMember $member) use ($monthStart, $monthEnd, $membership) {
+            ->map(function (CompanyMember $member) use ($monthStart, $monthEnd, $membership, $company) {
                 $minutes = $membership->role->canViewTeamHours()
                     ? (int) HourEntry::query()
                         ->where('user_id', $member->user_id)

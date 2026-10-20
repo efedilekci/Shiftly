@@ -1,13 +1,11 @@
+import InviteMemberDialog from '@/components/company/invite-member-dialog';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
 
 type Company = { id: number; name: string; slug: string };
 
@@ -60,31 +58,24 @@ export default function CompanyMembersIndex({
         auth: { user: { id: number } };
         errors?: { member?: string };
     }>();
-    const inviteForm = useForm({
-        email: '',
-        role: assignableRoles[0]?.value ?? 'employee',
-    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: company.name, href: `/bedrijf/${company.slug}` },
         { title: 'Medewerkers', href: `/bedrijf/${company.slug}/medewerkers` },
     ];
 
-    const submitInvite: FormEventHandler = (e) => {
-        e.preventDefault();
-        inviteForm.post(route('company.invitations.store', company.slug), {
-            preserveScroll: true,
-            onSuccess: () => inviteForm.reset('email'),
-        });
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${company.name} · Medewerkers`} />
             <div className="mx-auto w-full max-w-6xl space-y-8 px-5 py-8 sm:p-10">
-                <header className="space-y-2">
-                    <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Medewerkers</h1>
-                    <p className="text-muted-foreground text-sm">Overzicht van het team bij {company.name}.</p>
+                <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="space-y-2">
+                        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Medewerkers</h1>
+                        <p className="text-muted-foreground text-sm">Overzicht van het team bij {company.name}.</p>
+                    </div>
+                    {membership.can_manage_members && (
+                        <InviteMemberDialog companySlug={company.slug} assignableRoles={assignableRoles} />
+                    )}
                 </header>
 
                 {page.props.flash?.status && (
@@ -93,50 +84,6 @@ export default function CompanyMembersIndex({
                     </div>
                 )}
                 <InputError message={page.props.errors?.member} />
-
-                {membership.can_manage_members && (
-                    <section className="border-border space-y-4 rounded-xl border p-5">
-                        <div className="space-y-1">
-                            <h2 className="font-display text-xl font-semibold tracking-tight">Medewerker uitnodigen</h2>
-                            <p className="text-muted-foreground text-sm">
-                                Geen e-mail: de uitnodiging verschijnt in de inbox van dit e-mailadres op Shiftly.
-                            </p>
-                        </div>
-                        <form className="grid gap-4 sm:grid-cols-[1fr_180px_auto] sm:items-end" onSubmit={submitInvite}>
-                            <div className="grid gap-2">
-                                <Label htmlFor="invite-email">E-mailadres</Label>
-                                <Input
-                                    id="invite-email"
-                                    type="email"
-                                    required
-                                    value={inviteForm.data.email}
-                                    onChange={(e) => inviteForm.setData('email', e.target.value)}
-                                    placeholder="naam@bedrijf.nl"
-                                />
-                                <InputError message={inviteForm.errors.email} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="invite-role">Rol</Label>
-                                <Select value={inviteForm.data.role} onValueChange={(value) => inviteForm.setData('role', value)}>
-                                    <SelectTrigger id="invite-role">
-                                        <SelectValue placeholder="Kies rol" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {assignableRoles.map((role) => (
-                                            <SelectItem key={role.value} value={role.value}>
-                                                {role.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={inviteForm.errors.role} />
-                            </div>
-                            <Button type="submit" disabled={inviteForm.processing}>
-                                Uitnodigen
-                            </Button>
-                        </form>
-                    </section>
-                )}
 
                 <div className="bg-card overflow-hidden rounded-xl border">
                     <Table aria-label="Bedrijfsmedewerkers">
