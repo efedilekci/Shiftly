@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureCompanyCanInvite;
 use App\Http\Middleware\EnsureCompanyMember;
 use App\Http\Middleware\EnsureCompanyOwner;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'company.member' => EnsureCompanyMember::class,
+            'company.invite' => EnsureCompanyCanInvite::class,
             'company.owner' => EnsureCompanyOwner::class,
         ]);
     })

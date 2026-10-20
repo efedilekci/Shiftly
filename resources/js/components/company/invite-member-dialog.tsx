@@ -21,22 +21,23 @@ type RoleOption = { value: string; label: string };
 
 export default function InviteMemberDialog({
     companySlug,
-    assignableRoles,
+    inviteRoles,
 }: {
     companySlug: string;
-    assignableRoles: RoleOption[];
+    inviteRoles: RoleOption[];
 }) {
     const [open, setOpen] = useState(false);
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState(assignableRoles[0]?.value ?? 'employee');
+    const [role, setRole] = useState(inviteRoles[0]?.value ?? 'employee');
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState<{ email?: string; role?: string }>({});
+    const canChooseRole = inviteRoles.length > 1;
 
     const changeOpen = (nextOpen: boolean) => {
         if (processing) return;
         if (nextOpen) {
             setEmail('');
-            setRole(assignableRoles[0]?.value ?? 'employee');
+            setRole(inviteRoles[0]?.value ?? 'employee');
             setErrors({});
         }
         setOpen(nextOpen);
@@ -108,22 +109,28 @@ export default function InviteMemberDialog({
                         <InputError message={errors.email} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label>Rol</Label>
-                        <Select value={role} onValueChange={setRole}>
-                            <SelectTrigger aria-label="Rol bij uitnodigen">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {assignableRoles.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <InputError message={errors.role} />
-                    </div>
+                    {canChooseRole ? (
+                        <div className="grid gap-2">
+                            <Label>Rol</Label>
+                            <Select value={role} onValueChange={setRole}>
+                                <SelectTrigger aria-label="Rol bij uitnodigen">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {inviteRoles.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <InputError message={errors.role} />
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground text-sm">
+                            Uitnodiging als {inviteRoles[0]?.label?.toLowerCase() ?? 'medewerker'}.
+                        </p>
+                    )}
                 </div>
 
                 <DialogFooter>

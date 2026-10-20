@@ -60,6 +60,7 @@ class DashboardController extends Controller
                 'role' => $membership->role->value,
                 'role_label' => $membership->role->label(),
                 'can_manage_members' => $membership->role->canManageMembers(),
+                'can_invite_members' => $membership->role->canInviteMembers(),
                 'can_view_hours' => $membership->role->canViewTeamHours(),
             ],
             'stats' => [

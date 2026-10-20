@@ -22,6 +22,9 @@ class StoreCompanyInvitationRequest extends FormRequest
         /** @var Company $company */
         $company = $this->route('company');
 
+        /** @var CompanyMember $membership */
+        $membership = $this->attributes->get('companyMember');
+
         return [
             'email' => [
                 'required',
@@ -46,7 +49,7 @@ class StoreCompanyInvitationRequest extends FormRequest
                     }
                 },
             ],
-            'role' => ['required', 'string', Rule::in(CompanyMemberRole::assignableValues())],
+            'role' => ['required', 'string', Rule::in($membership->role->inviteableValues())],
         ];
     }
 

@@ -60,6 +60,39 @@ class CompanyInvitationTest extends TestCase
         ]);
     }
 
+    public function test_team_leader_can_invite_employees_only(): void
+    {
+        [, $company] = $this->createCompanyWithOwner();
+        $teamLeader = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $teamLeader->id,
+            'role' => CompanyMemberRole::TeamLeader,
+        ]);
+
+        $this->actingAs($teamLeader)
+            ->post(route('company.invitations.store', $company), [
+                'email' => 'medewerker@shiftly.test',
+                'role' => CompanyMemberRole::Employee->value,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('company_invitations', [
+            'company_id' => $company->id,
+            'email' => 'medewerker@shiftly.test',
+            'role' => CompanyMemberRole::Employee->value,
+        ]);
+
+        $this->actingAs($teamLeader)
+            ->post(route('company.invitations.store', $company), [
+                'email' => 'leider@shiftly.test',
+                'role' => CompanyMemberRole::TeamLeader->value,
+            ])
+            ->assertSessionHasErrors('role');
+    }
+
     public function test_employee_cannot_create_invitations(): void
     {
         [, $company] = $this->createCompanyWithOwner();

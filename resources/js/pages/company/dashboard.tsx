@@ -12,6 +12,7 @@ type Membership = {
     role: string;
     role_label: string;
     can_manage_members: boolean;
+    can_invite_members: boolean;
     can_view_hours: boolean;
 };
 

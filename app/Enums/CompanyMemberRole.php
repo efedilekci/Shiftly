@@ -22,6 +22,11 @@ enum CompanyMemberRole: string
         return $this === self::Owner;
     }
 
+    public function canInviteMembers(): bool
+    {
+        return $this === self::Owner || $this === self::TeamLeader;
+    }
+
     public function canViewTeamHours(): bool
     {
         return $this === self::Owner || $this === self::TeamLeader;
@@ -34,5 +39,15 @@ enum CompanyMemberRole: string
             self::TeamLeader->value,
             self::Employee->value,
         ];
+    }
+
+    /** @return list<string> */
+    public function inviteableValues(): array
+    {
+        return match ($this) {
+            self::Owner => self::assignableValues(),
+            self::TeamLeader => [self::Employee->value],
+            self::Employee => [],
+        };
     }
 }

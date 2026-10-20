@@ -43,9 +43,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', CompanyDashboardController::class)->name('dashboard');
         Route::get('/medewerkers', [CompanyMemberController::class, 'index'])->name('members.index');
 
-        Route::middleware('company.owner')->group(function () {
+        Route::middleware('company.invite')->group(function () {
             Route::post('/uitnodigingen', [CompanyInvitationController::class, 'store'])->name('invitations.store');
             Route::delete('/uitnodigingen/{invitation}', [CompanyInvitationController::class, 'destroy'])->name('invitations.destroy');
+        });
+
+        Route::middleware('company.owner')->group(function () {
             Route::patch('/medewerkers/{member}/rol', [CompanyMemberController::class, 'updateRole'])->name('members.role');
             Route::delete('/medewerkers/{member}', [CompanyMemberController::class, 'destroy'])->name('members.destroy');
         });

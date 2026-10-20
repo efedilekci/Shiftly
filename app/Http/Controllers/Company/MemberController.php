@@ -48,7 +48,7 @@ class MemberController extends Controller
                 ];
             });
 
-        $invitations = $membership->role->canManageMembers()
+        $invitations = $membership->role->canInviteMembers()
             ? $company->invitations()
                 ->whereNull('accepted_at')
                 ->orderByDesc('created_at')
@@ -72,10 +72,17 @@ class MemberController extends Controller
             'membership' => [
                 'role' => $membership->role->value,
                 'can_manage_members' => $membership->role->canManageMembers(),
+                'can_invite_members' => $membership->role->canInviteMembers(),
                 'can_view_hours' => $membership->role->canViewTeamHours(),
             ],
             'members' => $members,
             'invitations' => $invitations,
+            'inviteRoles' => collect($membership->role->inviteableValues())
+                ->map(fn (string $value) => [
+                    'value' => $value,
+                    'label' => CompanyMemberRole::from($value)->label(),
+                ])
+                ->values(),
             'assignableRoles' => collect(CompanyMemberRole::assignableValues())
                 ->map(fn (string $value) => [
                     'value' => $value,

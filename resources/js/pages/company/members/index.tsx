@@ -13,6 +13,7 @@ type Company = { id: number; name: string; slug: string };
 type Membership = {
     role: string;
     can_manage_members: boolean;
+    can_invite_members: boolean;
     can_view_hours: boolean;
 };
 
@@ -46,12 +47,14 @@ export default function CompanyMembersIndex({
     membership,
     members,
     invitations = [],
+    inviteRoles = [],
     assignableRoles = [],
 }: {
     company: Company;
     membership: Membership;
     members: Member[];
     invitations?: Invitation[];
+    inviteRoles?: RoleOption[];
     assignableRoles?: RoleOption[];
 }) {
     const page = usePage<{
@@ -74,8 +77,8 @@ export default function CompanyMembersIndex({
                         <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Medewerkers</h1>
                         <p className="text-muted-foreground text-sm">Overzicht van het team bij {company.name}.</p>
                     </div>
-                    {membership.can_manage_members && (
-                        <InviteMemberDialog companySlug={company.slug} assignableRoles={assignableRoles} />
+                    {membership.can_invite_members && (
+                        <InviteMemberDialog companySlug={company.slug} inviteRoles={inviteRoles} />
                     )}
                 </header>
 
@@ -160,7 +163,7 @@ export default function CompanyMembersIndex({
                     </Table>
                 </div>
 
-                {membership.can_manage_members && invitations.length > 0 && (
+                {membership.can_invite_members && invitations.length > 0 && (
                     <section className="space-y-3">
                         <h2 className="font-display text-xl font-semibold tracking-tight">Openstaande uitnodigingen</h2>
                         <div className="bg-card overflow-hidden rounded-xl border">
