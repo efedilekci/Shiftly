@@ -89,6 +89,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'companies' => $companies,
             'pendingInvitationCount' => $pendingInvitationCount,
+            'pendingHourApprovalsCount' => $companies->sum('pending_hour_approvals_count'),
             'flash' => [
                 'status' => $request->session()->get('status'),
             ],

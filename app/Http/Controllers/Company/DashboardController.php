@@ -30,6 +30,15 @@ class DashboardController extends Controller
             ->whereBetween('work_date', [$monthStart, $monthEnd])
             ->get(['duration_minutes', 'hourly_wage']);
 
+        $canApproveHours = $company->actorCanApproveHours($membership->role);
+
+        $pendingApprovalsCount = $canApproveHours
+            ? HourEntry::query()
+                ->where('company_id', $company->id)
+                ->where('approval_status', HourEntryApprovalStatus::Pending)
+                ->count()
+            : 0;
+
         $recentEntries = $membership->role->canViewTeamHours()
             ? HourEntry::query()
                 ->with('user:id,name')
@@ -66,11 +75,13 @@ class DashboardController extends Controller
                 'can_manage_members' => $membership->role->canManageMembers(),
                 'can_invite_members' => $membership->role->canInviteMembers(),
                 'can_view_hours' => $membership->role->canViewTeamHours(),
+                'can_approve_hours' => $canApproveHours,
             ],
             'stats' => [
                 'members' => $company->members()->count(),
                 'month_minutes' => (int) $monthEntries->sum('duration_minutes'),
                 'month_earnings_cents' => (int) $monthEntries->sum(fn (HourEntry $entry) => $entry->earningsCents()),
+                'pending_approvals' => $pendingApprovalsCount,
             ],
             'recentEntries' => $recentEntries,
         ]);

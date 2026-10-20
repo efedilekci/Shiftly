@@ -14,12 +14,14 @@ type Membership = {
     can_manage_members: boolean;
     can_invite_members: boolean;
     can_view_hours: boolean;
+    can_approve_hours: boolean;
 };
 
 type Stats = {
     members: number;
     month_minutes: number;
     month_earnings_cents: number;
+    pending_approvals: number;
 };
 
 type RecentEntry = {
@@ -79,6 +81,22 @@ export default function CompanyDashboard({
                     </div>
                 )}
 
+                {membership.can_approve_hours && stats.pending_approvals > 0 && (
+                    <div className="border-border bg-muted/40 flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm" role="status">
+                            {stats.pending_approvals === 1
+                                ? 'Er staat 1 urenregistratie klaar om te beoordelen.'
+                                : `Er staan ${stats.pending_approvals} urenregistraties klaar om te beoordelen.`}
+                        </p>
+                        <Link
+                            href={`${route('company.hours.index', company.slug)}?status=pending`}
+                            className="bg-primary text-primary-foreground inline-flex min-h-9 items-center justify-center rounded-lg px-3 text-sm font-medium"
+                        >
+                            Bekijk openstaande uren
+                        </Link>
+                    </div>
+                )}
+
                 <section aria-label="Samenvatting" className="grid gap-4 sm:grid-cols-3">
                     {[
                         { label: 'Medewerkers', value: String(stats.members) },
@@ -92,12 +110,22 @@ export default function CompanyDashboard({
                     ))}
                 </section>
 
-                <Link
-                    href={route('company.members.index', company.slug)}
-                    className="bg-primary text-primary-foreground inline-flex min-h-10 items-center rounded-xl px-4 text-sm font-medium"
-                >
-                    Medewerkers bekijken
-                </Link>
+                <div className="flex flex-wrap gap-3">
+                    <Link
+                        href={route('company.members.index', company.slug)}
+                        className="bg-primary text-primary-foreground inline-flex min-h-10 items-center rounded-xl px-4 text-sm font-medium"
+                    >
+                        Medewerkers bekijken
+                    </Link>
+                    {membership.can_view_hours && (
+                        <Link
+                            href={route('company.hours.index', company.slug)}
+                            className="border-border inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-medium"
+                        >
+                            Bedrijfsuren
+                        </Link>
+                    )}
+                </div>
 
                 {membership.can_view_hours && (
                     <section className="space-y-3">

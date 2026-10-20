@@ -1,8 +1,11 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { FormEvent, useState } from 'react';
 
 type Company = {
     id: number;
@@ -34,6 +37,19 @@ type HourRow = {
     can_review: boolean;
 };
 
+type Filters = {
+    status: string;
+    date_from: string;
+    date_to: string;
+    user_id: string;
+    baan: string;
+};
+
+type FilterOptions = {
+    members: { id: number; name: string }[];
+    banen: string[];
+};
+
 const currency = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 const dateFormat = new Intl.DateTimeFormat('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
@@ -58,30 +74,53 @@ export default function CompanyHoursIndex({
     company,
     membership,
     filters,
+    filterOptions,
     pendingCount,
     entries,
 }: {
     company: Company;
     membership: Membership;
-    filters: { status: string };
+    filters: Filters;
+    filterOptions: FilterOptions;
     pendingCount: number;
     entries: HourRow[];
 }) {
     const { flash } = usePage().props as { flash?: { status?: string | null } };
+    const [localFilters, setLocalFilters] = useState(filters);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: company.name, href: `/bedrijf/${company.slug}` },
         { title: 'Uren', href: `/bedrijf/${company.slug}/uren` },
     ];
 
-    const setStatus = (status: string) => {
-        router.get(route('company.hours.index', company.slug), { status }, { preserveState: true, replace: true });
+    const applyFilters = (next: Partial<Filters>) => {
+        const merged = { ...localFilters, ...next };
+        setLocalFilters(merged);
+        router.get(route('company.hours.index', company.slug), merged, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const submitFilters = (event: FormEvent) => {
+        event.preventDefault();
+        applyFilters({});
+    };
+
+    const clearFilters = () => {
+        applyFilters({
+            status: membership.can_approve_hours ? 'pending' : 'all',
+            date_from: '',
+            date_to: '',
+            user_id: '',
+            baan: '',
+        });
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${company.name} · Uren`} />
-            <div className="mx-auto w-full max-w-6xl space-y-8 px-5 py-8 sm:p-10">
+            <div className="w-full space-y-8 px-5 py-8 sm:px-8 sm:py-10">
                 <header className="space-y-2">
                     <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Bedrijfsuren</h1>
                     <p className="text-muted-foreground text-sm">
@@ -96,6 +135,13 @@ export default function CompanyHoursIndex({
                     </div>
                 )}
 
+                {membership.can_approve_hours && pendingCount > 0 && (
+                    <div className="border-border bg-muted/40 rounded-xl border px-4 py-3 text-sm" role="status">
+                        Er {pendingCount === 1 ? 'staat 1 urenregistratie' : `staan ${pendingCount} urenregistraties`} klaar om te
+                        beoordelen.
+                    </div>
+                )}
+
                 {!membership.can_approve_hours && company.hour_approval_mode !== 'auto' && (
                     <p className="text-muted-foreground text-sm">
                         Jij kunt uren niet goedkeuren. Met de huidige instelling doet alleen de eigenaar dat.
@@ -104,7 +150,7 @@ export default function CompanyHoursIndex({
 
                 <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter op status">
                     {statusFilters.map((filter) => {
-                        const active = filters.status === filter.value;
+                        const active = localFilters.status === filter.value;
 
                         return (
                             <Button
@@ -112,7 +158,7 @@ export default function CompanyHoursIndex({
                                 type="button"
                                 size="sm"
                                 variant={active ? 'default' : 'outline'}
-                                onClick={() => setStatus(filter.value)}
+                                onClick={() => applyFilters({ status: filter.value })}
                                 aria-pressed={active}
                             >
                                 {filter.label}
@@ -121,6 +167,67 @@ export default function CompanyHoursIndex({
                         );
                     })}
                 </div>
+
+                <form onSubmit={submitFilters} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="date_from">Vanaf</Label>
+                        <Input
+                            id="date_from"
+                            type="date"
+                            value={localFilters.date_from}
+                            onChange={(event) => setLocalFilters({ ...localFilters, date_from: event.target.value })}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="date_to">Tot en met</Label>
+                        <Input
+                            id="date_to"
+                            type="date"
+                            value={localFilters.date_to}
+                            onChange={(event) => setLocalFilters({ ...localFilters, date_to: event.target.value })}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="user_id">Medewerker</Label>
+                        <select
+                            id="user_id"
+                            value={localFilters.user_id}
+                            onChange={(event) => setLocalFilters({ ...localFilters, user_id: event.target.value })}
+                            className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                        >
+                            <option value="">Iedereen</option>
+                            {filterOptions.members.map((member) => (
+                                <option key={member.id} value={member.id}>
+                                    {member.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="baan">Baan</Label>
+                        <select
+                            id="baan"
+                            value={localFilters.baan}
+                            onChange={(event) => setLocalFilters({ ...localFilters, baan: event.target.value })}
+                            className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                        >
+                            <option value="">Alle banen</option>
+                            {filterOptions.banen.map((baan) => (
+                                <option key={baan} value={baan}>
+                                    {baan}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-4">
+                        <Button type="submit" size="sm">
+                            Filters toepassen
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={clearFilters}>
+                            Filters wissen
+                        </Button>
+                    </div>
+                </form>
 
                 <div className="bg-card overflow-hidden rounded-xl border">
                     <Table aria-label="Bedrijfsuren">

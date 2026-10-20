@@ -129,6 +129,67 @@ class CompanyHourApprovalTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_editing_rejected_company_hours_resubmits_them(): void
+    {
+        [, $company] = $this->createCompanyWithOwner(CompanyHourApprovalMode::TeamLeader);
+        $employee = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $baan = $company->ensureBaanFor($employee, '15.00');
+        $entry = $this->createEntry($employee, $company, $baan->id, HourEntryApprovalStatus::Rejected);
+
+        $this->actingAs($employee)
+            ->put(route('uren.update', $entry), [
+                'baan_id' => $baan->id,
+                'work_date' => now()->toDateString(),
+                'start_time' => '10:00',
+                'end_time' => '12:00',
+                'break_minutes' => 0,
+                'note' => 'Opnieuw',
+            ])
+            ->assertRedirect(route('uren.index'))
+            ->assertSessionHas('status', 'Uren opnieuw ingediend ter goedkeuring.');
+
+        $this->assertSame(HourEntryApprovalStatus::Pending, $entry->fresh()->approval_status);
+    }
+
+    public function test_company_hours_can_be_filtered_by_member_and_date(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner(CompanyHourApprovalMode::TeamLeader);
+        $employee = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $ownerBaan = $company->ensureBaanFor($owner, '20.00');
+        $employeeBaan = $company->ensureBaanFor($employee, '15.00');
+
+        $this->createEntry($owner, $company, $ownerBaan->id, HourEntryApprovalStatus::Pending, '09:00', '10:00');
+        $match = $this->createEntry($employee, $company, $employeeBaan->id, HourEntryApprovalStatus::Pending, '11:00', '12:00');
+
+        $this->actingAs($owner)
+            ->get(route('company.hours.index', [
+                'company' => $company,
+                'status' => 'pending',
+                'user_id' => $employee->id,
+                'date_from' => now()->toDateString(),
+                'date_to' => now()->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('entries', 1)
+                ->where('entries.0.id', $match->id)
+                ->where('filters.user_id', (string) $employee->id));
+    }
+
     /** @return array{0: User, 1: Company} */
     private function createCompanyWithOwner(CompanyHourApprovalMode $mode = CompanyHourApprovalMode::Auto): array
     {

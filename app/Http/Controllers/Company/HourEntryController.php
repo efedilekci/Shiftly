@@ -21,15 +21,41 @@ class HourEntryController extends Controller
 
         $canApprove = $company->actorCanApproveHours($membership->role);
         $statusFilter = $request->string('status')->toString();
+        $dateFrom = $request->string('date_from')->toString();
+        $dateTo = $request->string('date_to')->toString();
+        $userId = $request->integer('user_id') ?: null;
+        $baanName = trim($request->string('baan')->toString());
 
         if (! in_array($statusFilter, ['pending', 'approved', 'rejected', 'all'], true)) {
             $statusFilter = $canApprove ? 'pending' : 'all';
         }
 
+        $memberUsers = $company->members()
+            ->with('user:id,name')
+            ->get()
+            ->map(fn (CompanyMember $member) => [
+                'id' => $member->user_id,
+                'name' => $member->user?->name ?? 'Onbekend',
+            ])
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        $baanOptions = HourEntry::query()
+            ->where('company_id', $company->id)
+            ->distinct()
+            ->orderBy('baan_name')
+            ->pluck('baan_name')
+            ->filter()
+            ->values();
+
         $entries = HourEntry::query()
             ->with('user:id,name,email')
             ->where('company_id', $company->id)
             ->when($statusFilter !== 'all', fn ($query) => $query->where('approval_status', $statusFilter))
+            ->when($dateFrom !== '', fn ($query) => $query->whereDate('work_date', '>=', $dateFrom))
+            ->when($dateTo !== '', fn ($query) => $query->whereDate('work_date', '<=', $dateTo))
+            ->when($userId !== null, fn ($query) => $query->where('user_id', $userId))
+            ->when($baanName !== '', fn ($query) => $query->where('baan_name', $baanName))
             ->orderByDesc('work_date')
             ->orderByDesc('start_time')
             ->orderByDesc('id')
@@ -71,6 +97,14 @@ class HourEntryController extends Controller
             ],
             'filters' => [
                 'status' => $statusFilter,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'user_id' => $userId ? (string) $userId : '',
+                'baan' => $baanName,
+            ],
+            'filterOptions' => [
+                'members' => $memberUsers,
+                'banen' => $baanOptions,
             ],
             'pendingCount' => $pendingCount,
             'entries' => $entries,

@@ -8,7 +8,19 @@ import { Head, Link } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Uren', href: '/uren' }];
 
-export default function Uren({ entries, banen, today, status }: { entries: HourEntry[]; banen: Baan[]; today: string; status?: string }) {
+export default function Uren({
+    entries,
+    banen,
+    today,
+    status,
+    rejectedCompanyHoursCount = 0,
+}: {
+    entries: HourEntry[];
+    banen: Baan[];
+    today: string;
+    status?: string;
+    rejectedCompanyHoursCount?: number;
+}) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Uren" />
@@ -21,6 +33,13 @@ export default function Uren({ entries, banen, today, status }: { entries: HourE
                     <p role="status" className="text-primary text-sm">
                         {status}
                     </p>
+                )}
+                {rejectedCompanyHoursCount > 0 && (
+                    <div className="border-border bg-muted/40 rounded-xl border px-4 py-3 text-sm" role="status">
+                        {rejectedCompanyHoursCount === 1
+                            ? '1 bedrijfsregistratie is afgewezen. Pas de uren aan om ze opnieuw in te dienen.'
+                            : `${rejectedCompanyHoursCount} bedrijfsregistraties zijn afgewezen. Pas ze aan om opnieuw in te dienen.`}
+                    </div>
                 )}
                 {banen.length === 0 && (
                     <p className="text-muted-foreground text-sm">

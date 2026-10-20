@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\HourEntryApprovalStatus;
 use App\Http\Requests\StoreHourEntryRequest;
 use App\Http\Requests\UpdateHourEntryRequest;
 use App\Models\Company;
@@ -15,23 +16,28 @@ class HourEntryController extends Controller
 {
     public function index(Request $request): Response
     {
+        $entries = $request->user()->hourEntries()->orderByDesc('work_date')->orderByDesc('start_time')->orderByDesc('id')
+            ->get();
+
         return Inertia::render('uren/index', [
-            'entries' => $request->user()->hourEntries()->orderByDesc('work_date')->orderByDesc('start_time')->orderByDesc('id')
-                ->get()->map(fn (HourEntry $entry) => [
-                    'id' => $entry->id,
-                    'baan_id' => $entry->baan_id,
-                    'baan_name' => $entry->baan_name,
-                    'work_date' => $entry->work_date->format('Y-m-d'),
-                    'start_time' => substr($entry->start_time, 0, 5),
-                    'end_time' => substr($entry->end_time, 0, 5),
-                    'break_minutes' => $entry->break_minutes,
-                    'duration_minutes' => $entry->duration_minutes,
-                    'earnings_cents' => $entry->earningsCents(),
-                    'note' => $entry->note,
-                    'approval_status' => $entry->approval_status->value,
-                    'approval_status_label' => $entry->approval_status->label(),
-                    'is_company_entry' => $entry->company_id !== null,
-                ]),
+            'entries' => $entries->map(fn (HourEntry $entry) => [
+                'id' => $entry->id,
+                'baan_id' => $entry->baan_id,
+                'baan_name' => $entry->baan_name,
+                'work_date' => $entry->work_date->format('Y-m-d'),
+                'start_time' => substr($entry->start_time, 0, 5),
+                'end_time' => substr($entry->end_time, 0, 5),
+                'break_minutes' => $entry->break_minutes,
+                'duration_minutes' => $entry->duration_minutes,
+                'earnings_cents' => $entry->earningsCents(),
+                'note' => $entry->note,
+                'approval_status' => $entry->approval_status->value,
+                'approval_status_label' => $entry->approval_status->label(),
+                'is_company_entry' => $entry->company_id !== null,
+            ]),
+            'rejectedCompanyHoursCount' => $entries
+                ->filter(fn (HourEntry $entry) => $entry->company_id !== null && $entry->approval_status === HourEntryApprovalStatus::Rejected)
+                ->count(),
             'banen' => $request->user()->banen()->orderBy('name')->get(['id', 'name', 'hourly_wage']),
             'today' => now()->toDateString(),
             'status' => $request->session()->get('status'),
@@ -62,22 +68,30 @@ class HourEntryController extends Controller
         $data = $request->validated();
         $baanId = isset($data['baan_id']) ? (int) $data['baan_id'] : null;
         $data['baan_id'] = $baanId;
+        $wasRejected = $hourEntry->approval_status === HourEntryApprovalStatus::Rejected;
 
         if ($baanId !== $hourEntry->baan_id) {
             $baan = $request->user()->banen()->findOrFail($baanId);
             $data['baan_name'] = $baan->name;
             $data['hourly_wage'] = $baan->hourly_wage;
             $data['company_id'] = $baan->company_id;
-            $company = $baan->company_id ? Company::query()->find($baan->company_id) : null;
-            $data['approval_status'] = HourEntry::approvalStatusForCompany($company);
         }
+
+        $companyId = $data['company_id'] ?? $hourEntry->company_id;
+        $company = $companyId ? Company::query()->find($companyId) : null;
+        $data['approval_status'] = HourEntry::approvalStatusForCompany($company);
 
         $hourEntry->update([
             ...$data,
             'duration_minutes' => HourEntry::grossMinutes($data['start_time'], $data['end_time']) - (int) $data['break_minutes'],
         ]);
 
-        return to_route('uren.index')->with('status', 'Uren bijgewerkt.');
+        $resubmitted = $wasRejected && $data['approval_status'] === HourEntryApprovalStatus::Pending;
+
+        return to_route('uren.index')->with(
+            'status',
+            $resubmitted ? 'Uren opnieuw ingediend ter goedkeuring.' : 'Uren bijgewerkt.',
+        );
     }
 
     public function destroy(Request $request, HourEntry $hourEntry): RedirectResponse
