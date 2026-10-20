@@ -1,3 +1,4 @@
+import RejectHourEntryDialog from '@/components/company/reject-hour-entry-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -283,17 +284,12 @@ export default function CompanyHoursIndex({
                                                     >
                                                         Goedkeuren
                                                     </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            router.post(route('company.hours.reject', [company.slug, entry.id]), {}, {
-                                                                preserveScroll: true,
-                                                            })
-                                                        }
-                                                    >
-                                                        Afwijzen
-                                                    </Button>
+                                                    <RejectHourEntryDialog
+                                                        companySlug={company.slug}
+                                                        entryId={entry.id}
+                                                        employeeName={entry.user_name}
+                                                        workDate={formatDate(entry.work_date)}
+                                                    />
                                                 </div>
                                             ) : (
                                                 <span className="text-muted-foreground text-sm">-</span>

@@ -5,9 +5,11 @@ namespace Tests\Feature\Company;
 use App\Enums\CompanyHourApprovalMode;
 use App\Enums\CompanyMemberRole;
 use App\Enums\HourEntryApprovalStatus;
+use App\Enums\InboxMessageType;
 use App\Models\Company;
 use App\Models\CompanyMember;
 use App\Models\HourEntry;
+use App\Models\InboxMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -39,11 +41,22 @@ class CompanyHourApprovalTest extends TestCase
         $this->assertSame(HourEntryApprovalStatus::Approved, $pending->fresh()->approval_status);
 
         $this->actingAs($owner)
-            ->post(route('company.hours.reject', [$company, $other]))
+            ->post(route('company.hours.reject', [$company, $other]), [
+                'reason' => 'Pauze klopt niet',
+            ])
             ->assertRedirect()
             ->assertSessionHas('status');
 
         $this->assertSame(HourEntryApprovalStatus::Rejected, $other->fresh()->approval_status);
+
+        $message = InboxMessage::query()
+            ->where('user_id', $employee->id)
+            ->where('type', InboxMessageType::HoursRejected)
+            ->first();
+
+        $this->assertNotNull($message);
+        $this->assertStringContainsString('Pauze klopt niet', $message->body);
+        $this->assertSame('Pauze klopt niet', data_get($message->meta, 'reason'));
     }
 
     public function test_team_leader_can_approve_when_mode_allows_it(): void
