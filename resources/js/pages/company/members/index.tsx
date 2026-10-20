@@ -1,3 +1,4 @@
+import DeleteMemberDialog from '@/components/company/delete-member-dialog';
 import InviteMemberDialog from '@/components/company/invite-member-dialog';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -142,17 +143,11 @@ export default function CompanyMembersIndex({
                                         {membership.can_manage_members && (
                                             <TableCell className="text-right">
                                                 {canEdit ? (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            router.delete(route('company.members.destroy', [company.slug, member.id]), {
-                                                                preserveScroll: true,
-                                                            })
-                                                        }
-                                                    >
-                                                        Verwijderen
-                                                    </Button>
+                                                    <DeleteMemberDialog
+                                                        companySlug={company.slug}
+                                                        memberId={member.id}
+                                                        memberName={member.name}
+                                                    />
                                                 ) : (
                                                     <span className="text-muted-foreground text-sm">-</span>
                                                 )}
