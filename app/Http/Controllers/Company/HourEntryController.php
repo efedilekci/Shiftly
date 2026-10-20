@@ -26,6 +26,7 @@ class HourEntryController extends Controller
         $dateTo = $request->string('date_to')->toString();
         $userId = $request->integer('user_id') ?: null;
         $baanName = trim($request->string('baan')->toString());
+        $reviewEntryId = $request->integer('review') ?: null;
 
         if (! in_array($statusFilter, ['pending', 'approved', 'rejected', 'all'], true)) {
             $statusFilter = $canApprove ? 'pending' : 'all';
@@ -61,23 +62,38 @@ class HourEntryController extends Controller
             ->orderByDesc('start_time')
             ->orderByDesc('id')
             ->limit(200)
-            ->get()
-            ->map(fn (HourEntry $entry) => [
-                'id' => $entry->id,
-                'user_name' => $entry->user?->name ?? 'Onbekend',
-                'user_email' => $entry->user?->email,
-                'baan_name' => $entry->baan_name,
-                'work_date' => $entry->work_date?->format('Y-m-d'),
-                'start_time' => substr((string) $entry->start_time, 0, 5),
-                'end_time' => substr((string) $entry->end_time, 0, 5),
-                'break_minutes' => $entry->break_minutes,
-                'duration_minutes' => $entry->duration_minutes,
-                'earnings_cents' => $entry->earningsCents(),
-                'note' => $entry->note,
-                'approval_status' => $entry->approval_status->value,
-                'approval_status_label' => $entry->approval_status->label(),
-                'can_review' => $canApprove && $entry->approval_status === HourEntryApprovalStatus::Pending,
-            ]);
+            ->get();
+
+        if ($reviewEntryId !== null && ! $entries->contains('id', $reviewEntryId)) {
+            $reviewEntry = HourEntry::query()
+                ->with('user:id,name,email')
+                ->where('company_id', $company->id)
+                ->whereKey($reviewEntryId)
+                ->first();
+
+            if ($reviewEntry) {
+                $entries = $entries->prepend($reviewEntry)->values();
+            } else {
+                $reviewEntryId = null;
+            }
+        }
+
+        $mappedEntries = $entries->map(fn (HourEntry $entry) => [
+            'id' => $entry->id,
+            'user_name' => $entry->user?->name ?? 'Onbekend',
+            'user_email' => $entry->user?->email,
+            'baan_name' => $entry->baan_name,
+            'work_date' => $entry->work_date?->format('Y-m-d'),
+            'start_time' => substr((string) $entry->start_time, 0, 5),
+            'end_time' => substr((string) $entry->end_time, 0, 5),
+            'break_minutes' => $entry->break_minutes,
+            'duration_minutes' => $entry->duration_minutes,
+            'earnings_cents' => $entry->earningsCents(),
+            'note' => $entry->note,
+            'approval_status' => $entry->approval_status->value,
+            'approval_status_label' => $entry->approval_status->label(),
+            'can_review' => $canApprove && $entry->approval_status === HourEntryApprovalStatus::Pending,
+        ]);
 
         $pendingCount = HourEntry::query()
             ->where('company_id', $company->id)
@@ -108,7 +124,8 @@ class HourEntryController extends Controller
                 'banen' => $baanOptions,
             ],
             'pendingCount' => $pendingCount,
-            'entries' => $entries,
+            'reviewEntryId' => $reviewEntryId,
+            'entries' => $mappedEntries,
         ]);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\InboxMessageType;
+use App\Models\Company;
 use App\Models\CompanyInvitation;
 use App\Models\CompanyMember;
 use App\Models\InboxMessage;
@@ -51,11 +52,28 @@ class InboxController extends Controller
                 $actionUrl = $message->action_url;
                 $hourEntryId = data_get($message->meta, 'hour_entry_id');
 
+                if ($message->type === InboxMessageType::HoursRejected && filled($hourEntryId)) {
+                    $actionUrl = route('uren.index', ['edit' => $hourEntryId], absolute: false);
+                }
+
                 if (
-                    $message->type === InboxMessageType::HoursRejected
+                    in_array($message->type, [
+                        InboxMessageType::HoursPendingReview,
+                        InboxMessageType::HoursResubmitted,
+                    ], true)
                     && filled($hourEntryId)
                 ) {
-                    $actionUrl = route('uren.index', ['edit' => $hourEntryId], absolute: false);
+                    $company = filled(data_get($message->meta, 'company_id'))
+                        ? Company::query()->find(data_get($message->meta, 'company_id'))
+                        : null;
+
+                    if ($company) {
+                        $actionUrl = route('company.hours.index', [
+                            'company' => $company,
+                            'status' => 'pending',
+                            'review' => $hourEntryId,
+                        ], absolute: false);
+                    }
                 }
 
                 return [

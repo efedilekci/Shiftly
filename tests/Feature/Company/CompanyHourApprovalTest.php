@@ -233,6 +233,32 @@ class CompanyHourApprovalTest extends TestCase
         $this->assertSame(HourEntryApprovalStatus::Pending, $entry->fresh()->approval_status);
     }
 
+    public function test_review_query_highlights_pending_entry_from_inbox(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner(CompanyHourApprovalMode::Owner);
+        $employee = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $baan = $company->ensureBaanFor($employee, '15.00');
+        $entry = $this->createEntry($employee, $company, $baan->id, HourEntryApprovalStatus::Pending);
+
+        $this->actingAs($owner)
+            ->get(route('company.hours.index', [
+                'company' => $company,
+                'status' => 'pending',
+                'review' => $entry->id,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('reviewEntryId', $entry->id)
+                ->where('entries.0.id', $entry->id));
+    }
+
     public function test_company_hours_can_be_filtered_by_member_and_date(): void
     {
         [$owner, $company] = $this->createCompanyWithOwner(CompanyHourApprovalMode::TeamLeader);

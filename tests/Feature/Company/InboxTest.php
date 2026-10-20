@@ -155,14 +155,27 @@ class InboxTest extends TestCase
             ])
             ->assertRedirect(route('uren.index', absolute: false));
 
-        $this->assertDatabaseHas('inbox_messages', [
-            'user_id' => $owner->id,
-            'type' => InboxMessageType::HoursPendingReview->value,
-        ]);
+        $pendingMessage = InboxMessage::query()
+            ->where('user_id', $owner->id)
+            ->where('type', InboxMessageType::HoursPendingReview)
+            ->first();
+
+        $this->assertNotNull($pendingMessage);
         $this->assertDatabaseMissing('inbox_messages', [
             'user_id' => $employee->id,
             'type' => InboxMessageType::HoursPendingReview->value,
         ]);
+
+        $entryId = data_get($pendingMessage->meta, 'hour_entry_id');
+        $this->assertNotNull($entryId);
+        $this->assertSame(
+            route('company.hours.index', [
+                'company' => $company,
+                'status' => 'pending',
+                'review' => $entryId,
+            ], absolute: false),
+            $pendingMessage->action_url,
+        );
     }
 
     public function test_user_can_mark_inbox_message_as_read(): void

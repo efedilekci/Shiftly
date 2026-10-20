@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 type Company = {
     id: number;
@@ -78,6 +78,7 @@ export default function CompanyHoursIndex({
     filterOptions,
     pendingCount,
     entries,
+    reviewEntryId = null,
 }: {
     company: Company;
     membership: Membership;
@@ -85,9 +86,19 @@ export default function CompanyHoursIndex({
     filterOptions: FilterOptions;
     pendingCount: number;
     entries: HourRow[];
+    reviewEntryId?: number | null;
 }) {
     const { flash } = usePage().props as { flash?: { status?: string | null } };
     const [localFilters, setLocalFilters] = useState(filters);
+
+    useEffect(() => {
+        if (!reviewEntryId) {
+            return;
+        }
+
+        const row = document.getElementById(`company-hour-${reviewEntryId}`);
+        row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [reviewEntryId]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: company.name, href: `/bedrijf/${company.slug}` },
@@ -252,7 +263,11 @@ export default function CompanyHoursIndex({
                                 </TableRow>
                             ) : (
                                 entries.map((entry) => (
-                                    <TableRow key={entry.id}>
+                                    <TableRow
+                                        key={entry.id}
+                                        id={`company-hour-${entry.id}`}
+                                        className={entry.id === reviewEntryId ? 'bg-muted/50' : undefined}
+                                    >
                                         <TableCell>{formatDate(entry.work_date)}</TableCell>
                                         <TableCell>
                                             <span className="block font-medium">{entry.user_name}</span>

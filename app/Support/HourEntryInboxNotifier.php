@@ -39,7 +39,11 @@ class HourEntryInboxNotifier
             $type,
             $title,
             $body,
-            route('company.hours.index', $company, absolute: false),
+            route('company.hours.index', [
+                'company' => $company,
+                'status' => 'pending',
+                'review' => $entry->id,
+            ], absolute: false),
             'Bekijk uren',
             [
                 'hour_entry_id' => $entry->id,
