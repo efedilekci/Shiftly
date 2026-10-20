@@ -57,6 +57,8 @@ type RecentEntry = {
     end_time: string;
     duration_minutes: number;
     earnings_cents: number;
+    approval_status?: string;
+    approval_status_label?: string;
 };
 
 type ActiveClock = { baan_name: string; started_at: number };
@@ -69,6 +71,7 @@ type DashboardProps = {
     month_minutes: number;
     month_earnings_cents: number;
     month_breakdown: MonthBreakdownRow[];
+    pending_company_hours_count?: number;
     hours_chart: HoursChartPoint[];
     recent_entries: RecentEntry[];
     activeClock: ActiveClock | null;
@@ -86,6 +89,7 @@ export default function Dashboard({
     month_minutes,
     month_earnings_cents,
     month_breakdown,
+    pending_company_hours_count = 0,
     hours_chart,
     recent_entries,
     activeClock,
@@ -110,7 +114,7 @@ export default function Dashboard({
                 <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="space-y-2">
                         <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Welkom, {auth.user.name}.</h1>
-                        <p className="text-muted-foreground text-sm">Overzicht van je gewerkte uren</p>
+                        <p className="text-muted-foreground text-sm">Overzicht van je goedgekeurde uren</p>
                     </div>
 
                     <div className="flex items-center gap-1" role="group" aria-label="Maand kiezen">
@@ -140,6 +144,17 @@ export default function Dashboard({
                     <p role="status" className="text-primary text-sm">
                         {status}
                     </p>
+                )}
+
+                {pending_company_hours_count > 0 && (
+                    <div className="border-border bg-muted/40 rounded-xl border px-4 py-3 text-sm" role="status">
+                        {pending_company_hours_count === 1
+                            ? '1 bedrijfsregistratie deze maand telt nog niet mee (in afwachting of afgewezen).'
+                            : `${pending_company_hours_count} bedrijfsregistraties deze maand tellen nog niet mee (in afwachting of afgewezen).`}{' '}
+                        <Link href={route('uren.index')} className="text-foreground underline underline-offset-4">
+                            Bekijk uren
+                        </Link>
+                    </div>
                 )}
 
                 <div className="grid gap-4 md:grid-cols-4">
@@ -282,6 +297,7 @@ export default function Dashboard({
                                         <TableHead>Datum</TableHead>
                                         <TableHead>Baan</TableHead>
                                         <TableHead>Tijd</TableHead>
+                                        <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Gewerkt</TableHead>
                                         <TableHead className="text-right">Verdiensten</TableHead>
                                     </TableRow>
@@ -299,6 +315,7 @@ export default function Dashboard({
                                                     <span className="text-muted-foreground ml-1 text-xs">(+1 dag)</span>
                                                 )}
                                             </TableCell>
+                                            <TableCell>{entry.approval_status_label ?? 'Goedgekeurd'}</TableCell>
                                             <TableCell className="text-right tabular-nums">
                                                 {formatDuration(entry.duration_minutes)}
                                             </TableCell>

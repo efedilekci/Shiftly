@@ -2,6 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CompanyHourApprovalMode;
+use App\Enums\HourEntryApprovalStatus;
+use App\Models\Company;
+use App\Models\CompanyMember;
+use App\Models\HourEntry;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -327,5 +332,85 @@ class DashboardTest extends TestCase
                 ->component('dashboard')
                 ->where('activeClock.baan_name', 'Winkel')
                 ->where('activeClock.started_at', now()->timestamp));
+    }
+
+    public function test_dashboard_counts_only_approved_hours(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-19 12:00:00', 'Europe/Amsterdam'));
+
+        $user = User::factory()->create();
+        $company = Company::factory()->create([
+            'owner_user_id' => $user->id,
+            'hour_approval_mode' => CompanyHourApprovalMode::Owner,
+        ]);
+        CompanyMember::factory()->owner()->create([
+            'company_id' => $company->id,
+            'user_id' => $user->id,
+        ]);
+
+        $personal = $user->banen()->create(['name' => 'Bijbaan', 'hourly_wage' => '15.00']);
+        $companyBaan = $company->ensureBaanFor($user, '20.00');
+
+        $this->actingAs($user)->post('/uren', [
+            'baan_id' => $personal->id,
+            'work_date' => '2026-10-05',
+            'start_time' => '09:00',
+            'end_time' => '10:00',
+            'break_minutes' => 0,
+        ])->assertRedirect('/uren');
+
+        HourEntry::query()->create([
+            'user_id' => $user->id,
+            'baan_id' => $companyBaan->id,
+            'company_id' => $company->id,
+            'baan_name' => $companyBaan->name,
+            'hourly_wage' => '20.00',
+            'work_date' => '2026-10-06',
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+            'break_minutes' => 0,
+            'duration_minutes' => 120,
+            'approval_status' => HourEntryApprovalStatus::Pending,
+        ]);
+
+        HourEntry::query()->create([
+            'user_id' => $user->id,
+            'baan_id' => $companyBaan->id,
+            'company_id' => $company->id,
+            'baan_name' => $companyBaan->name,
+            'hourly_wage' => '20.00',
+            'work_date' => '2026-10-07',
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
+            'break_minutes' => 0,
+            'duration_minutes' => 60,
+            'approval_status' => HourEntryApprovalStatus::Rejected,
+        ]);
+
+        HourEntry::query()->create([
+            'user_id' => $user->id,
+            'baan_id' => $companyBaan->id,
+            'company_id' => $company->id,
+            'baan_name' => $companyBaan->name,
+            'hourly_wage' => '20.00',
+            'work_date' => '2026-10-08',
+            'start_time' => '09:00:00',
+            'end_time' => '10:30:00',
+            'break_minutes' => 0,
+            'duration_minutes' => 90,
+            'approval_status' => HourEntryApprovalStatus::Approved,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('month_entry_count', 2)
+                ->where('month_minutes', 150)
+                ->where('month_earnings_cents', 4500)
+                ->where('pending_company_hours_count', 2)
+                ->has('hours_chart', 6)
+                ->where('hours_chart.5.minutes', 150));
     }
 }

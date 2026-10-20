@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\HourEntryApprovalStatus;
 use App\Models\HourEntry;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class DashboardController extends Controller
         $monthEnd = $selectedMonth->copy()->endOfMonth()->toDateString();
 
         $entries = $user->hourEntries()
+            ->where('approval_status', HourEntryApprovalStatus::Approved)
             ->whereBetween('work_date', [$monthStart, $monthEnd])
             ->get();
 
@@ -35,6 +37,15 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
+        $pendingCompanyHoursCount = $user->hourEntries()
+            ->whereNotNull('company_id')
+            ->whereIn('approval_status', [
+                HourEntryApprovalStatus::Pending,
+                HourEntryApprovalStatus::Rejected,
+            ])
+            ->whereBetween('work_date', [$monthStart, $monthEnd])
+            ->count();
+
         $recentEntries = $user->hourEntries()
             ->orderByDesc('work_date')
             ->orderByDesc('start_time')
@@ -49,6 +60,8 @@ class DashboardController extends Controller
                 'end_time' => substr($entry->end_time, 0, 5),
                 'duration_minutes' => $entry->duration_minutes,
                 'earnings_cents' => $entry->earningsCents(),
+                'approval_status' => $entry->approval_status->value,
+                'approval_status_label' => $entry->approval_status->label(),
             ])
             ->all();
 
@@ -65,7 +78,10 @@ class DashboardController extends Controller
             'month_minutes' => (int) $entries->sum('duration_minutes'),
             'month_earnings_cents' => (int) $entries->sum(fn (HourEntry $entry) => $entry->earningsCents()),
             'month_breakdown' => $monthBreakdown,
-            'hours_chart' => $this->hoursChart($user->hourEntries()),
+            'pending_company_hours_count' => $pendingCompanyHoursCount,
+            'hours_chart' => $this->hoursChart(
+                $user->hourEntries()->where('approval_status', HourEntryApprovalStatus::Approved),
+            ),
             'recent_entries' => $recentEntries,
             'activeClock' => $clock ? ['baan_name' => $clock->baan_name, 'started_at' => $clock->started_at] : null,
             'banen' => $user->banen()->orderBy('name')->get(['id', 'name', 'hourly_wage']),
