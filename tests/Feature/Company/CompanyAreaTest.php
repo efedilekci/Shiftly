@@ -50,9 +50,32 @@ class CompanyAreaTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_employee_can_view_members_but_not_month_hours(): void
+    public function test_team_leader_can_view_dashboard_and_members(): void
     {
-        [$owner, $company] = $this->createCompanyWithOwner();
+        [, $company] = $this->createCompanyWithOwner();
+        $teamLeader = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $teamLeader->id,
+            'role' => CompanyMemberRole::TeamLeader,
+        ]);
+
+        $this->actingAs($teamLeader)
+            ->get(route('company.dashboard', $company))
+            ->assertOk();
+
+        $this->actingAs($teamLeader)
+            ->get(route('company.members.index', $company))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('membership.can_view_hours', true)
+                ->where('membership.can_manage_members', false));
+    }
+
+    public function test_employee_cannot_access_company_area(): void
+    {
+        [, $company] = $this->createCompanyWithOwner();
         $employee = User::factory()->create();
 
         CompanyMember::factory()->create([
@@ -62,18 +85,12 @@ class CompanyAreaTest extends TestCase
         ]);
 
         $this->actingAs($employee)
-            ->get(route('company.members.index', $company))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('membership.can_view_hours', false)
-                ->where('members.0.month_minutes', null)
-                ->where('members.1.month_minutes', null));
+            ->get(route('company.dashboard', $company))
+            ->assertForbidden();
 
-        $this->actingAs($owner)
+        $this->actingAs($employee)
             ->get(route('company.members.index', $company))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('membership.can_view_hours', true));
+            ->assertForbidden();
     }
 
     /** @return array{0: User, 1: Company} */

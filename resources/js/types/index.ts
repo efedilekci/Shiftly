@@ -32,6 +32,8 @@ export type SharedCompany = {
     slug: string;
     role: string;
     role_label: string;
+    can_access_company_area?: boolean;
+    can_manage_settings?: boolean;
 };
 
 export interface SharedData {

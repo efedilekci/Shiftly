@@ -51,7 +51,10 @@ class HandleInertiaRequests extends Middleware
                     'slug' => $membership->company->slug,
                     'role' => $membership->role->value,
                     'role_label' => $membership->role->label(),
+                    'can_access_company_area' => $membership->role->canViewTeamHours(),
+                    'can_manage_settings' => $membership->role->canManageMembers(),
                 ])
+                ->filter(fn (array $company) => $company['can_access_company_area'])
                 ->values()
             : collect();
 

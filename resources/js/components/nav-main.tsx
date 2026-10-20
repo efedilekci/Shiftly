@@ -2,7 +2,7 @@ import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, Sideba
 import { isNavItemActive } from '@/lib/main-nav';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, Users } from 'lucide-react';
+import { Building2, Settings, Users } from 'lucide-react';
 import { useMemo } from 'react';
 
 function NavLink({ item }: { item: NavItem & { exact?: boolean } }) {
@@ -34,9 +34,8 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
     const companies = page.props.companies ?? [];
 
     const companySections = useMemo(() => {
-        return companies.map((company) => ({
-            label: companies.length === 1 ? company.name : `Bedrijf · ${company.name}`,
-            items: [
+        return companies.map((company) => {
+            const items: Array<NavItem & { exact?: boolean }> = [
                 {
                     title: 'Overzicht',
                     url: `/bedrijf/${company.slug}`,
@@ -48,8 +47,21 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                     url: `/bedrijf/${company.slug}/medewerkers`,
                     icon: Users,
                 },
-            ],
-        }));
+            ];
+
+            if (company.can_manage_settings) {
+                items.push({
+                    title: 'Instellingen',
+                    url: `/bedrijf/${company.slug}/instellingen`,
+                    icon: Settings,
+                });
+            }
+
+            return {
+                label: companies.length === 1 ? company.name : `Bedrijf · ${company.name}`,
+                items,
+            };
+        });
     }, [companies]);
 
     return (

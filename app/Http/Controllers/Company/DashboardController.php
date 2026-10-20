@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Company;
 
+use App\Enums\HourEntryApprovalStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\CompanyMember;
@@ -24,6 +25,7 @@ class DashboardController extends Controller
 
         $monthEntries = HourEntry::query()
             ->where('company_id', $company->id)
+            ->where('approval_status', HourEntryApprovalStatus::Approved)
             ->whereIn('user_id', $memberUserIds)
             ->whereBetween('work_date', [$monthStart, $monthEnd])
             ->get(['duration_minutes', 'hourly_wage']);
@@ -46,6 +48,8 @@ class DashboardController extends Controller
                     'end_time' => substr((string) $entry->end_time, 0, 5),
                     'duration_minutes' => $entry->duration_minutes,
                     'earnings_cents' => $entry->earningsCents(),
+                    'approval_status' => $entry->approval_status->value,
+                    'approval_status_label' => $entry->approval_status->label(),
                 ])
                 ->values()
             : collect();

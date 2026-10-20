@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\HourEntryApprovalStatus;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ class HourEntry extends Model
 {
     protected $fillable = [
         'user_id', 'baan_id', 'company_id', 'baan_name', 'hourly_wage', 'work_date',
-        'start_time', 'end_time', 'break_minutes', 'duration_minutes', 'note',
+        'start_time', 'end_time', 'break_minutes', 'duration_minutes', 'note', 'approval_status',
     ];
 
     protected function casts(): array
@@ -21,7 +22,17 @@ class HourEntry extends Model
             'break_minutes' => 'integer',
             'duration_minutes' => 'integer',
             'company_id' => 'integer',
+            'approval_status' => HourEntryApprovalStatus::class,
         ];
+    }
+
+    public static function approvalStatusForCompany(?Company $company): HourEntryApprovalStatus
+    {
+        if ($company === null) {
+            return HourEntryApprovalStatus::Approved;
+        }
+
+        return $company->initialHourApprovalStatus();
     }
 
     public function user(): BelongsTo

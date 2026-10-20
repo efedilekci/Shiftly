@@ -62,6 +62,23 @@ class InboxTest extends TestCase
         $this->assertNotNull($invitation->fresh()->accepted_at);
     }
 
+    public function test_employee_accept_redirects_to_app_dashboard(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner();
+        $invitee = User::factory()->create(['email' => 'werknemer@shiftly.test']);
+
+        $invitation = CompanyInvitation::factory()->create([
+            'company_id' => $company->id,
+            'invited_by' => $owner->id,
+            'email' => $invitee->email,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $this->actingAs($invitee)
+            ->post(route('inbox.accept', $invitation))
+            ->assertRedirect(route('dashboard', absolute: false));
+    }
+
     public function test_user_cannot_accept_invitation_for_another_email(): void
     {
         [$owner, $company] = $this->createCompanyWithOwner();

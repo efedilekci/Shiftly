@@ -8,6 +8,7 @@ use App\Http\Controllers\ClockController;
 use App\Http\Controllers\Company\DashboardController as CompanyDashboardController;
 use App\Http\Controllers\Company\InvitationController as CompanyInvitationController;
 use App\Http\Controllers\Company\MemberController as CompanyMemberController;
+use App\Http\Controllers\Company\SettingsController as CompanySettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HourEntryController;
 use App\Http\Controllers\InboxController;
@@ -40,8 +41,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/inbox/{invitation}/accepteren', [InboxController::class, 'accept'])->name('inbox.accept');
 
     Route::prefix('bedrijf/{company}')->name('company.')->middleware('company.member')->group(function () {
-        Route::get('/', CompanyDashboardController::class)->name('dashboard');
-        Route::get('/medewerkers', [CompanyMemberController::class, 'index'])->name('members.index');
+        Route::middleware('company.staff')->group(function () {
+            Route::get('/', CompanyDashboardController::class)->name('dashboard');
+            Route::get('/medewerkers', [CompanyMemberController::class, 'index'])->name('members.index');
+        });
 
         Route::middleware('company.invite')->group(function () {
             Route::post('/uitnodigingen', [CompanyInvitationController::class, 'store'])->name('invitations.store');
@@ -49,6 +52,8 @@ Route::middleware(['auth'])->group(function () {
         });
 
         Route::middleware('company.owner')->group(function () {
+            Route::get('/instellingen', [CompanySettingsController::class, 'edit'])->name('settings.edit');
+            Route::put('/instellingen', [CompanySettingsController::class, 'update'])->name('settings.update');
             Route::get('/medewerkers/{member}', [CompanyMemberController::class, 'edit'])->name('members.edit');
             Route::put('/medewerkers/{member}', [CompanyMemberController::class, 'update'])->name('members.update');
             Route::patch('/medewerkers/{member}/rol', [CompanyMemberController::class, 'updateRole'])->name('members.role');

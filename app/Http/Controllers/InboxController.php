@@ -74,8 +74,16 @@ class InboxController extends Controller
 
         $invitation->loadMissing('company');
 
+        $status = 'Je bent nu lid van '.$invitation->company->name.'.';
+
+        if ($invitation->role->canViewTeamHours()) {
+            return redirect()
+                ->route('company.dashboard', $invitation->company)
+                ->with('status', $status);
+        }
+
         return redirect()
-            ->route('company.dashboard', $invitation->company)
-            ->with('status', 'Je bent nu lid van '.$invitation->company->name.'.');
+            ->route('dashboard')
+            ->with('status', $status);
     }
 }

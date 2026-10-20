@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\HourEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -113,6 +114,7 @@ class ClockController extends Controller
             $companyId = $clock->baan_id
                 ? $user->banen()->whereKey($clock->baan_id)->value('company_id')
                 : null;
+            $company = $companyId ? Company::query()->find($companyId) : null;
 
             $user->hourEntries()->create([
                 'baan_id' => $clock->baan_id,
@@ -125,6 +127,7 @@ class ClockController extends Controller
                 'break_minutes' => (int) $data['break_minutes'],
                 'duration_minutes' => $grossMinutes - (int) $data['break_minutes'],
                 'note' => $data['note'],
+                'approval_status' => HourEntry::approvalStatusForCompany($company),
             ]);
             $clock->delete();
         });

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Company;
 
 use App\Enums\CompanyMemberRole;
+use App\Enums\HourEntryApprovalStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\UpdateCompanyMemberRequest;
 use App\Http\Requests\Company\UpdateCompanyMemberRoleRequest;
@@ -39,6 +40,7 @@ class MemberController extends Controller
                     ? (int) HourEntry::query()
                         ->where('user_id', $member->user_id)
                         ->where('company_id', $company->id)
+                        ->where('approval_status', HourEntryApprovalStatus::Approved)
                         ->whereBetween('work_date', [$monthStart, $monthEnd])
                         ->sum('duration_minutes')
                     : null;

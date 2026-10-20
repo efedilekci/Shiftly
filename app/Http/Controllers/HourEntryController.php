@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreHourEntryRequest;
 use App\Http\Requests\UpdateHourEntryRequest;
+use App\Models\Company;
 use App\Models\HourEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,12 +40,15 @@ class HourEntryController extends Controller
         $data = $request->validated();
         $baan = $request->user()->banen()->findOrFail($data['baan_id']);
 
+        $company = $baan->company_id ? Company::query()->find($baan->company_id) : null;
+
         $request->user()->hourEntries()->create([
             ...$data,
             'company_id' => $baan->company_id,
             'baan_name' => $baan->name,
             'hourly_wage' => $baan->hourly_wage,
             'duration_minutes' => HourEntry::grossMinutes($data['start_time'], $data['end_time']) - (int) $data['break_minutes'],
+            'approval_status' => HourEntry::approvalStatusForCompany($company),
         ]);
 
         return to_route('uren.index')->with('status', 'Uren toegevoegd.');
@@ -61,6 +65,8 @@ class HourEntryController extends Controller
             $data['baan_name'] = $baan->name;
             $data['hourly_wage'] = $baan->hourly_wage;
             $data['company_id'] = $baan->company_id;
+            $company = $baan->company_id ? Company::query()->find($baan->company_id) : null;
+            $data['approval_status'] = HourEntry::approvalStatusForCompany($company);
         }
 
         $hourEntry->update([

@@ -31,6 +31,8 @@ type RecentEntry = {
     end_time: string;
     duration_minutes: number;
     earnings_cents: number;
+    approval_status: string;
+    approval_status_label: string;
 };
 
 function formatDuration(minutes: number): string {
@@ -108,6 +110,7 @@ export default function CompanyDashboard({
                                         <TableHead>Medewerker</TableHead>
                                         <TableHead>Baan</TableHead>
                                         <TableHead>Tijd</TableHead>
+                                        <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Gewerkt</TableHead>
                                         <TableHead className="text-right">Verdiensten</TableHead>
                                     </TableRow>
@@ -115,7 +118,7 @@ export default function CompanyDashboard({
                                 <TableBody>
                                     {recentEntries.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-muted-foreground h-20 text-center">
+                                            <TableCell colSpan={7} className="text-muted-foreground h-20 text-center">
                                                 Nog geen urenregistraties van medewerkers.
                                             </TableCell>
                                         </TableRow>
@@ -128,6 +131,7 @@ export default function CompanyDashboard({
                                                 <TableCell>
                                                     {entry.start_time}-{entry.end_time}
                                                 </TableCell>
+                                                <TableCell>{entry.approval_status_label}</TableCell>
                                                 <TableCell className="text-right tabular-nums">
                                                     {formatDuration(entry.duration_minutes)}
                                                 </TableCell>

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CompanyHourApprovalMode;
+use App\Enums\HourEntryApprovalStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +19,22 @@ class Company extends Model
         'name',
         'slug',
         'owner_user_id',
+        'hour_approval_mode',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'hour_approval_mode' => CompanyHourApprovalMode::class,
+        ];
+    }
+
+    public function initialHourApprovalStatus(): HourEntryApprovalStatus
+    {
+        return $this->hour_approval_mode->requiresApproval()
+            ? HourEntryApprovalStatus::Pending
+            : HourEntryApprovalStatus::Approved;
+    }
 
     protected static function booted(): void
     {
