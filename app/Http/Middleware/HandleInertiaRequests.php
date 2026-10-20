@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\HourEntryApprovalStatus;
 use App\Models\CompanyInvitation;
 use App\Models\HourEntry;
+use App\Models\InboxMessage;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -80,6 +81,15 @@ class HandleInertiaRequests extends Middleware
                 ->count()
             : 0;
 
+        $unreadInboxMessageCount = $user
+            ? InboxMessage::query()
+                ->where('user_id', $user->id)
+                ->whereNull('read_at')
+                ->count()
+            : 0;
+
+        $pendingInboxCount = $pendingInvitationCount + $unreadInboxMessageCount;
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -88,7 +98,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'companies' => $companies,
-            'pendingInvitationCount' => $pendingInvitationCount,
+            'pendingInvitationCount' => $pendingInboxCount,
+            'pendingInboxCount' => $pendingInboxCount,
             'pendingHourApprovalsCount' => $companies->sum('pending_hour_approvals_count'),
             'flash' => [
                 'status' => $request->session()->get('status'),

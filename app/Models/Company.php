@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Enums\CompanyHourApprovalMode;
 use App\Enums\CompanyMemberRole;
 use App\Enums\HourEntryApprovalStatus;
+use App\Enums\InboxMessageType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class Company extends Model
@@ -40,6 +42,35 @@ class Company extends Model
     public function actorCanApproveHours(CompanyMemberRole $role): bool
     {
         return $this->hour_approval_mode->canBeApprovedBy($role);
+    }
+
+    /** @return Collection<int, User> */
+    public function usersWhoCanApproveHours(): Collection
+    {
+        return $this->members()
+            ->with('user')
+            ->get()
+            ->filter(fn (CompanyMember $member) => $this->actorCanApproveHours($member->role) && $member->user)
+            ->map(fn (CompanyMember $member) => $member->user)
+            ->values();
+    }
+
+    public function notifyHourApprovers(
+        InboxMessageType $type,
+        string $title,
+        string $body,
+        ?string $actionUrl = null,
+        ?string $actionLabel = null,
+        ?array $meta = null,
+        ?int $exceptUserId = null,
+    ): void {
+        foreach ($this->usersWhoCanApproveHours() as $user) {
+            if ($exceptUserId !== null && $user->id === $exceptUserId) {
+                continue;
+            }
+
+            InboxMessage::notify($user, $type, $title, $body, $actionUrl, $actionLabel, $meta);
+        }
     }
 
     protected static function booted(): void

@@ -44,6 +44,7 @@ export interface SharedData {
     auth: Auth;
     companies: SharedCompany[];
     pendingInvitationCount: number;
+    pendingInboxCount?: number;
     pendingHourApprovalsCount?: number;
     flash?: { status?: string | null };
     activeClock: SharedActiveClock | null;

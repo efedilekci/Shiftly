@@ -7,6 +7,7 @@ use App\Http\Requests\StoreHourEntryRequest;
 use App\Http\Requests\UpdateHourEntryRequest;
 use App\Models\Company;
 use App\Models\HourEntry;
+use App\Support\HourEntryInboxNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,6 +19,11 @@ class HourEntryController extends Controller
     {
         $entries = $request->user()->hourEntries()->orderByDesc('work_date')->orderByDesc('start_time')->orderByDesc('id')
             ->get();
+
+        $editEntryId = $request->integer('edit') ?: null;
+        if ($editEntryId !== null && ! $entries->contains('id', $editEntryId)) {
+            $editEntryId = null;
+        }
 
         return Inertia::render('uren/index', [
             'entries' => $entries->map(fn (HourEntry $entry) => [
@@ -35,6 +41,7 @@ class HourEntryController extends Controller
                 'approval_status_label' => $entry->approval_status->label(),
                 'is_company_entry' => $entry->company_id !== null,
             ]),
+            'editEntryId' => $editEntryId,
             'rejectedCompanyHoursCount' => $entries
                 ->filter(fn (HourEntry $entry) => $entry->company_id !== null && $entry->approval_status === HourEntryApprovalStatus::Rejected)
                 ->count(),
@@ -51,7 +58,7 @@ class HourEntryController extends Controller
 
         $company = $baan->company_id ? Company::query()->find($baan->company_id) : null;
 
-        $request->user()->hourEntries()->create([
+        $entry = $request->user()->hourEntries()->create([
             ...$data,
             'company_id' => $baan->company_id,
             'baan_name' => $baan->name,
@@ -59,6 +66,8 @@ class HourEntryController extends Controller
             'duration_minutes' => HourEntry::grossMinutes($data['start_time'], $data['end_time']) - (int) $data['break_minutes'],
             'approval_status' => HourEntry::approvalStatusForCompany($company),
         ]);
+
+        HourEntryInboxNotifier::notifyApproversOfPending($entry);
 
         return to_route('uren.index')->with('status', 'Uren toegevoegd.');
     }
@@ -87,6 +96,10 @@ class HourEntryController extends Controller
         ]);
 
         $resubmitted = $wasRejected && $data['approval_status'] === HourEntryApprovalStatus::Pending;
+
+        if ($resubmitted) {
+            HourEntryInboxNotifier::notifyApproversOfPending($hourEntry->fresh(), true);
+        }
 
         return to_route('uren.index')->with(
             'status',

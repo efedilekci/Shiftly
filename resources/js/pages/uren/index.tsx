@@ -14,13 +14,17 @@ export default function Uren({
     today,
     status,
     rejectedCompanyHoursCount = 0,
+    editEntryId = null,
 }: {
     entries: HourEntry[];
     banen: Baan[];
     today: string;
     status?: string;
     rejectedCompanyHoursCount?: number;
+    editEntryId?: number | null;
 }) {
+    const editEntry = editEntryId ? entries.find((entry) => entry.id === editEntryId) : undefined;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Uren" />
@@ -29,6 +33,7 @@ export default function Uren({
                     <h1 className="font-display text-3xl font-semibold tracking-tight">Uren</h1>
                     <HourEntryDialog banen={banen} today={today} />
                 </header>
+                {editEntry && <HourEntryDialog banen={banen} today={today} entry={editEntry} defaultOpen showTrigger={false} />}
                 {status && (
                     <p role="status" className="text-primary text-sm">
                         {status}

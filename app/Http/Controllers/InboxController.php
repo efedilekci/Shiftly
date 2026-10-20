@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\InboxMessageType;
 use App\Models\CompanyInvitation;
 use App\Models\CompanyMember;
+use App\Models\InboxMessage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,8 @@ class InboxController extends Controller
 {
     public function index(Request $request): Response
     {
-        $email = $request->user()->email;
+        $user = $request->user();
+        $email = $user->email;
 
         $invitations = CompanyInvitation::query()
             ->with(['company:id,name,slug', 'inviter:id,name'])
@@ -23,7 +26,10 @@ class InboxController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (CompanyInvitation $invitation) => [
+                'kind' => 'invitation',
                 'id' => $invitation->id,
+                'title' => 'Uitnodiging voor '.$invitation->company?->name,
+                'body' => ($invitation->inviter?->name ?? 'Iemand').' nodigde je uit als '.$invitation->role->label().'.',
                 'company_name' => $invitation->company?->name,
                 'company_slug' => $invitation->company?->slug,
                 'role' => $invitation->role->value,
@@ -32,10 +38,47 @@ class InboxController extends Controller
                 'expires_at' => $invitation->expires_at?->toIso8601String(),
                 'is_expired' => $invitation->isExpired(),
                 'is_pending' => $invitation->isPending(),
+                'created_at' => $invitation->created_at?->toIso8601String(),
+                'is_unread' => true,
             ]);
 
+        $messages = InboxMessage::query()
+            ->where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->get()
+            ->map(function (InboxMessage $message) {
+                $actionUrl = $message->action_url;
+                $hourEntryId = data_get($message->meta, 'hour_entry_id');
+
+                if (
+                    $message->type === InboxMessageType::HoursRejected
+                    && filled($hourEntryId)
+                ) {
+                    $actionUrl = route('uren.index', ['edit' => $hourEntryId], absolute: false);
+                }
+
+                return [
+                    'kind' => 'message',
+                    'id' => $message->id,
+                    'type' => $message->type->value,
+                    'title' => $message->title,
+                    'body' => $message->body,
+                    'action_url' => $actionUrl,
+                    'action_label' => $message->action_label,
+                    'created_at' => $message->created_at?->toIso8601String(),
+                    'is_unread' => $message->isUnread(),
+                ];
+            });
+
+        $items = $invitations
+            ->concat($messages)
+            ->sortByDesc('created_at')
+            ->values();
+
         return Inertia::render('inbox/index', [
-            'invitations' => $invitations,
+            'items' => $items,
+            'invitations' => $invitations->values(),
         ]);
     }
 
@@ -85,5 +128,24 @@ class InboxController extends Controller
         return redirect()
             ->route('dashboard')
             ->with('status', $status);
+    }
+
+    public function markRead(Request $request, InboxMessage $message): RedirectResponse
+    {
+        abort_unless($message->user_id === $request->user()->id, 403);
+
+        $message->markAsRead();
+
+        return back();
+    }
+
+    public function markAllRead(Request $request): RedirectResponse
+    {
+        InboxMessage::query()
+            ->where('user_id', $request->user()->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return back()->with('status', 'Alle meldingen gemarkeerd als gelezen.');
     }
 }

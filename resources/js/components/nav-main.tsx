@@ -10,7 +10,7 @@ function NavLink({ item }: { item: NavItem & { exact?: boolean; badge?: number }
     const { setOpenMobile } = useSidebar();
     const path = page.url.split('?')[0];
     const active = item.exact ? path === item.url || path === `${item.url}/` : isNavItemActive(page.url, item.url);
-    const badge = item.badge ?? (item.url === '/inbox' ? page.props.pendingInvitationCount : 0);
+    const badge = item.badge ?? (item.url === '/inbox' ? (page.props.pendingInboxCount ?? page.props.pendingInvitationCount) : 0);
 
     return (
         <SidebarMenuItem>

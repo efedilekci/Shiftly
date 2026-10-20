@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\HourEntry;
 use App\Models\User;
+use App\Support\HourEntryInboxNotifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -116,7 +117,7 @@ class ClockController extends Controller
                 : null;
             $company = $companyId ? Company::query()->find($companyId) : null;
 
-            $user->hourEntries()->create([
+            $entry = $user->hourEntries()->create([
                 'baan_id' => $clock->baan_id,
                 'company_id' => $companyId,
                 'baan_name' => $clock->baan_name,
@@ -130,6 +131,8 @@ class ClockController extends Controller
                 'approval_status' => HourEntry::approvalStatusForCompany($company),
             ]);
             $clock->delete();
+
+            HourEntryInboxNotifier::notifyApproversOfPending($entry);
         });
 
         return to_route($data['redirect'] ?? 'clock.index')->with('status', 'Uitgeklokt. Je uren zijn opgeslagen.');

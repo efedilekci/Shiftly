@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\CompanyMember;
 use App\Models\HourEntry;
+use App\Support\HourEntryInboxNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -119,6 +120,12 @@ class HourEntryController extends Controller
             'approval_status' => HourEntryApprovalStatus::Approved,
         ])->save();
 
+        HourEntryInboxNotifier::notifyEmployeeOfDecision(
+            $hourEntry,
+            HourEntryApprovalStatus::Approved,
+            $request->user(),
+        );
+
         return back()->with('status', 'Uren goedgekeurd.');
     }
 
@@ -126,13 +133,20 @@ class HourEntryController extends Controller
     {
         $this->authorizeReview($request, $company, $hourEntry);
 
-        $request->validate([
+        $data = $request->validate([
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         $hourEntry->forceFill([
             'approval_status' => HourEntryApprovalStatus::Rejected,
         ])->save();
+
+        HourEntryInboxNotifier::notifyEmployeeOfDecision(
+            $hourEntry,
+            HourEntryApprovalStatus::Rejected,
+            $request->user(),
+            $data['reason'] ?? null,
+        );
 
         return back()->with('status', 'Uren afgewezen.');
     }

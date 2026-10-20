@@ -59,6 +59,11 @@ class User extends Authenticatable
         return $this->hasMany(CompanyMember::class);
     }
 
+    public function inboxMessages(): HasMany
+    {
+        return $this->hasMany(InboxMessage::class);
+    }
+
     public function companies(): BelongsToMany
     {
         return $this->belongsToMany(Company::class, 'company_members')

@@ -14,12 +14,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { type Baan } from '@/types/baan';
 import { type HourEntry } from '@/types/hour-entry';
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import { Pencil, Plus } from 'lucide-react';
 import { type FormEventHandler, useId, useRef, useState } from 'react';
 
-export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]; today: string; entry?: HourEntry }) {
-    const [open, setOpen] = useState(false);
+export default function HourEntryDialog({
+    banen,
+    today,
+    entry,
+    defaultOpen = false,
+    showTrigger = true,
+}: {
+    banen: Baan[];
+    today: string;
+    entry?: HourEntry;
+    defaultOpen?: boolean;
+    showTrigger?: boolean;
+}) {
+    const [open, setOpen] = useState(defaultOpen);
     const fieldId = useId();
     const baanInput = useRef<HTMLSelectElement>(null);
     const form = useRef<HTMLFormElement>(null);
@@ -47,6 +59,13 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
         minutes -= Number(data.break_minutes);
         return minutes > 0 ? minutes : null;
     })();
+    const clearEditQuery = () => {
+        if (!defaultOpen || !entry) {
+            return;
+        }
+
+        router.get(route('uren.index'), {}, { replace: true, preserveState: true, preserveScroll: true });
+    };
     const changeOpen = (nextOpen: boolean) => {
         if (processing) return;
         if (nextOpen) {
@@ -54,6 +73,9 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
             clearErrors();
         }
         setOpen(nextOpen);
+        if (!nextOpen) {
+            clearEditQuery();
+        }
     };
     const handleSubmit: FormEventHandler = (event) => {
         event.preventDefault();
@@ -64,6 +86,7 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
                 setOpen(false);
                 reset();
                 clearErrors();
+                clearEditQuery();
             },
             onError: (validationErrors) => {
                 const field = ['baan_id', 'work_date', 'start_time', 'end_time', 'break_minutes', 'note'].find((key) => validationErrors[key]);
@@ -73,19 +96,21 @@ export default function HourEntryDialog({ banen, today, entry }: { banen: Baan[]
     };
     return (
         <Dialog open={open} onOpenChange={changeOpen}>
-            {entry ? (
-                <DialogTrigger
-                    render={<Button type="button" variant="ghost" size="icon" />}
-                    aria-label={`Uren wijzigen: ${entry.baan_name}, ${entry.work_date}`}
-                >
-                    <Pencil aria-hidden="true" />
-                </DialogTrigger>
-            ) : (
-                <DialogTrigger render={<Button disabled={banen.length === 0} />}>
-                    <Plus aria-hidden="true" />
-                    Uren toevoegen
-                </DialogTrigger>
-            )}
+            {showTrigger ? (
+                entry ? (
+                    <DialogTrigger
+                        render={<Button type="button" variant="ghost" size="icon" />}
+                        aria-label={`Uren wijzigen: ${entry.baan_name}, ${entry.work_date}`}
+                    >
+                        <Pencil aria-hidden="true" />
+                    </DialogTrigger>
+                ) : (
+                    <DialogTrigger render={<Button disabled={banen.length === 0} />}>
+                        <Plus aria-hidden="true" />
+                        Uren toevoegen
+                    </DialogTrigger>
+                )
+            ) : null}
             <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg" initialFocus={baanInput}>
                 <DialogHeader>
                     <DialogTitle>{entry ? 'Uren wijzigen' : 'Uren toevoegen'}</DialogTitle>
