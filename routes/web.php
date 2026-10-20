@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
     Route::post('/inbox/{invitation}/accepteren', [InboxController::class, 'accept'])->name('inbox.accept');
+    Route::post('/inbox/{invitation}/weigeren', [InboxController::class, 'decline'])->name('inbox.decline');
     Route::post('/inbox/meldingen/alles-gelezen', [InboxController::class, 'markAllRead'])->name('inbox.messages.read-all');
     Route::post('/inbox/meldingen/{message}/gelezen', [InboxController::class, 'markRead'])->name('inbox.messages.read');
 

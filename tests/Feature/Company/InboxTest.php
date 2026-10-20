@@ -255,6 +255,32 @@ class InboxTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_user_can_decline_invitation_from_inbox(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner();
+        $invitee = User::factory()->create(['email' => 'weiger@shiftly.test']);
+
+        $invitation = CompanyInvitation::factory()->create([
+            'company_id' => $company->id,
+            'invited_by' => $owner->id,
+            'email' => $invitee->email,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $this->actingAs($invitee)
+            ->post(route('inbox.decline', $invitation))
+            ->assertRedirect(route('inbox.index', absolute: false))
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseMissing('company_invitations', [
+            'id' => $invitation->id,
+        ]);
+        $this->assertDatabaseMissing('company_members', [
+            'company_id' => $company->id,
+            'user_id' => $invitee->id,
+        ]);
+    }
+
     /** @return array{0: User, 1: Company} */
     private function createCompanyWithOwner(CompanyHourApprovalMode $mode = CompanyHourApprovalMode::Owner): array
     {

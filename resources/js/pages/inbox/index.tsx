@@ -118,11 +118,28 @@ export default function InboxIndex({ items }: { items: InboxItem[]; invitations:
                                             </p>
                                         </div>
                                         {item.is_pending ? (
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => router.post(route('inbox.accept', item.id))}
+                                                >
+                                                    Accepteren
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => router.post(route('inbox.decline', item.id))}
+                                                >
+                                                    Weigeren
+                                                </Button>
+                                            </div>
+                                        ) : item.is_expired ? (
                                             <Button
                                                 size="sm"
-                                                onClick={() => router.post(route('inbox.accept', item.id))}
+                                                variant="ghost"
+                                                onClick={() => router.post(route('inbox.decline', item.id))}
                                             >
-                                                Accepteren
+                                                Verwijderen
                                             </Button>
                                         ) : null}
                                     </div>

@@ -148,6 +148,28 @@ class InboxController extends Controller
             ->with('status', $status);
     }
 
+    public function decline(Request $request, CompanyInvitation $invitation): RedirectResponse
+    {
+        abort_unless(
+            strtolower($invitation->email) === strtolower($request->user()->email),
+            403,
+        );
+
+        if ($invitation->accepted_at !== null) {
+            return redirect()
+                ->route('inbox.index')
+                ->withErrors(['invitation' => 'Deze uitnodiging is al geaccepteerd.']);
+        }
+
+        $invitation->loadMissing('company');
+        $companyName = $invitation->company?->name ?? 'het bedrijf';
+        $invitation->delete();
+
+        return redirect()
+            ->route('inbox.index')
+            ->with('status', 'Uitnodiging voor '.$companyName.' geweigerd.');
+    }
+
     public function markRead(Request $request, InboxMessage $message): RedirectResponse
     {
         abort_unless($message->user_id === $request->user()->id, 403);
