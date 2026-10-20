@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -53,9 +54,28 @@ class User extends Authenticatable
         return $this->hasMany(Baan::class);
     }
 
+    public function companyMemberships(): HasMany
+    {
+        return $this->hasMany(CompanyMember::class);
+    }
+
+    public function companies(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class, 'company_members')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === Role::Admin;
+    }
+
+    public function membershipFor(Company $company): ?CompanyMember
+    {
+        return $this->companyMemberships()
+            ->where('company_id', $company->id)
+            ->first();
     }
 
     /** @return array<string, string> */
