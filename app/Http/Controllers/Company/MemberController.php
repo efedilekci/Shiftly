@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Company;
 
 use App\Enums\CompanyMemberRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Company\UpdateCompanyMemberRoleRequest;
 use App\Models\Company;
 use App\Models\CompanyMember;
 use App\Models\HourEntry;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -80,5 +82,33 @@ class MemberController extends Controller
                 ])
                 ->values(),
         ]);
+    }
+
+    public function updateRole(UpdateCompanyMemberRoleRequest $request, Company $company, CompanyMember $member): RedirectResponse
+    {
+        abort_unless($member->company_id === $company->id, 404);
+
+        $member->forceFill([
+            'role' => $request->validated('role'),
+        ])->save();
+
+        return back()->with('status', 'Rol bijgewerkt.');
+    }
+
+    public function destroy(Request $request, Company $company, CompanyMember $member): RedirectResponse
+    {
+        abort_unless($member->company_id === $company->id, 404);
+
+        if ($member->role === CompanyMemberRole::Owner) {
+            return back()->withErrors(['member' => 'De eigenaar kan niet worden verwijderd.']);
+        }
+
+        if ($member->user_id === $request->user()->id) {
+            return back()->withErrors(['member' => 'Je kunt jezelf niet verwijderen.']);
+        }
+
+        $member->delete();
+
+        return back()->with('status', 'Medewerker verwijderd uit het bedrijf.');
     }
 }

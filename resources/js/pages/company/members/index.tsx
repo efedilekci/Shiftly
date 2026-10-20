@@ -55,7 +55,11 @@ export default function CompanyMembersIndex({
     invitations?: Invitation[];
     assignableRoles?: RoleOption[];
 }) {
-    const { flash } = usePage().props as { flash?: { status?: string | null } };
+    const page = usePage<{
+        flash?: { status?: string | null };
+        auth: { user: { id: number } };
+        errors?: { member?: string };
+    }>();
     const inviteForm = useForm({
         email: '',
         role: assignableRoles[0]?.value ?? 'employee',
@@ -83,11 +87,12 @@ export default function CompanyMembersIndex({
                     <p className="text-muted-foreground text-sm">Overzicht van het team bij {company.name}.</p>
                 </header>
 
-                {flash?.status && (
+                {page.props.flash?.status && (
                     <div className="border-border bg-muted/40 rounded-xl border px-4 py-3 text-sm" role="status">
-                        {flash.status}
+                        {page.props.flash.status}
                     </div>
                 )}
+                <InputError message={page.props.errors?.member} />
 
                 {membership.can_manage_members && (
                     <section className="border-border space-y-4 rounded-xl border p-5">
@@ -141,21 +146,74 @@ export default function CompanyMembersIndex({
                                 <TableHead>E-mail</TableHead>
                                 <TableHead>Rol</TableHead>
                                 {membership.can_view_hours && <TableHead className="text-right">Uren deze maand</TableHead>}
+                                {membership.can_manage_members && <TableHead className="text-right">Acties</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {members.map((member) => (
-                                <TableRow key={member.id}>
-                                    <TableCell className="font-medium">{member.name}</TableCell>
-                                    <TableCell>{member.email}</TableCell>
-                                    <TableCell>{member.role_label}</TableCell>
-                                    {membership.can_view_hours && (
-                                        <TableCell className="text-right tabular-nums">
-                                            {member.month_minutes === null ? '-' : formatDuration(member.month_minutes)}
+                            {members.map((member) => {
+                                const canEdit =
+                                    membership.can_manage_members &&
+                                    member.role !== 'owner' &&
+                                    member.user_id !== page.props.auth.user.id;
+
+                                return (
+                                    <TableRow key={member.id}>
+                                        <TableCell className="font-medium">{member.name}</TableCell>
+                                        <TableCell>{member.email}</TableCell>
+                                        <TableCell>
+                                            {canEdit ? (
+                                                <Select
+                                                    value={member.role}
+                                                    onValueChange={(value) =>
+                                                        router.patch(
+                                                            route('company.members.role', [company.slug, member.id]),
+                                                            { role: value },
+                                                            { preserveScroll: true },
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger className="w-[160px]" aria-label={`Rol van ${member.name}`}>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {assignableRoles.map((role) => (
+                                                            <SelectItem key={role.value} value={role.value}>
+                                                                {role.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                member.role_label
+                                            )}
                                         </TableCell>
-                                    )}
-                                </TableRow>
-                            ))}
+                                        {membership.can_view_hours && (
+                                            <TableCell className="text-right tabular-nums">
+                                                {member.month_minutes === null ? '-' : formatDuration(member.month_minutes)}
+                                            </TableCell>
+                                        )}
+                                        {membership.can_manage_members && (
+                                            <TableCell className="text-right">
+                                                {canEdit ? (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            router.delete(route('company.members.destroy', [company.slug, member.id]), {
+                                                                preserveScroll: true,
+                                                            })
+                                                        }
+                                                    >
+                                                        Verwijderen
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-muted-foreground text-sm">-</span>
+                                                )}
+                                            </TableCell>
+                                        )}
+                                    </TableRow>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 </div>

@@ -46,6 +46,8 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('company.owner')->group(function () {
             Route::post('/uitnodigingen', [CompanyInvitationController::class, 'store'])->name('invitations.store');
             Route::delete('/uitnodigingen/{invitation}', [CompanyInvitationController::class, 'destroy'])->name('invitations.destroy');
+            Route::patch('/medewerkers/{member}/rol', [CompanyMemberController::class, 'updateRole'])->name('members.role');
+            Route::delete('/medewerkers/{member}', [CompanyMemberController::class, 'destroy'])->name('members.destroy');
         });
     });
 });
