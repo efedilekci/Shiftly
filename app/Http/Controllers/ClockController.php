@@ -110,8 +110,13 @@ class ClockController extends Controller
                 ]);
             }
 
+            $companyId = $clock->baan_id
+                ? $user->banen()->whereKey($clock->baan_id)->value('company_id')
+                : null;
+
             $user->hourEntries()->create([
                 'baan_id' => $clock->baan_id,
+                'company_id' => $companyId,
                 'baan_name' => $clock->baan_name,
                 'hourly_wage' => $clock->hourly_wage,
                 'work_date' => $workDate,

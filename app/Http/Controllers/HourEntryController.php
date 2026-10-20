@@ -41,6 +41,7 @@ class HourEntryController extends Controller
 
         $request->user()->hourEntries()->create([
             ...$data,
+            'company_id' => $baan->company_id,
             'baan_name' => $baan->name,
             'hourly_wage' => $baan->hourly_wage,
             'duration_minutes' => HourEntry::grossMinutes($data['start_time'], $data['end_time']) - (int) $data['break_minutes'],
@@ -59,6 +60,7 @@ class HourEntryController extends Controller
             $baan = $request->user()->banen()->findOrFail($baanId);
             $data['baan_name'] = $baan->name;
             $data['hourly_wage'] = $baan->hourly_wage;
+            $data['company_id'] = $baan->company_id;
         }
 
         $hourEntry->update([

@@ -38,6 +38,12 @@ class BaanController extends Controller
     {
         abort_unless($baan->user_id === $request->user()->id, 403);
 
+        if ($baan->isCompanyBaan()) {
+            return to_route('banen.index')->withErrors([
+                'baan' => 'Een bedrijfsbaan kun je niet verwijderen. Die verdwijnt als je uit het bedrijf wordt gehaald.',
+            ]);
+        }
+
         $baan->delete();
 
         return to_route('banen.index')->with('status', 'Baan verwijderd.');

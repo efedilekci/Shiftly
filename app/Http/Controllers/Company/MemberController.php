@@ -32,6 +32,7 @@ class MemberController extends Controller
                 $minutes = $membership->role->canViewTeamHours()
                     ? (int) HourEntry::query()
                         ->where('user_id', $member->user_id)
+                        ->where('company_id', $company->id)
                         ->whereBetween('work_date', [$monthStart, $monthEnd])
                         ->sum('duration_minutes')
                     : null;
@@ -107,8 +108,13 @@ class MemberController extends Controller
             return back()->withErrors(['member' => 'Je kunt jezelf niet verwijderen.']);
         }
 
+        $user = $member->user;
         $member->delete();
 
-        return back()->with('status', 'Medewerker verwijderd uit het bedrijf.');
+        if ($user) {
+            $company->removeBaanFor($user);
+        }
+
+        return back()->with('status', 'Medewerker verwijderd uit het bedrijf. Oude uren blijven bewaard.');
     }
 }

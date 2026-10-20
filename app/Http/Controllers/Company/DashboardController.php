@@ -23,6 +23,7 @@ class DashboardController extends Controller
         $monthEnd = now()->endOfMonth()->toDateString();
 
         $monthEntries = HourEntry::query()
+            ->where('company_id', $company->id)
             ->whereIn('user_id', $memberUserIds)
             ->whereBetween('work_date', [$monthStart, $monthEnd])
             ->get(['duration_minutes', 'hourly_wage']);
@@ -30,6 +31,7 @@ class DashboardController extends Controller
         $recentEntries = $membership->role->canViewTeamHours()
             ? HourEntry::query()
                 ->with('user:id,name')
+                ->where('company_id', $company->id)
                 ->whereIn('user_id', $memberUserIds)
                 ->orderByDesc('work_date')
                 ->orderByDesc('start_time')

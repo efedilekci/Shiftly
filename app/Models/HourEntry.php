@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class HourEntry extends Model
 {
     protected $fillable = [
-        'baan_id', 'baan_name', 'hourly_wage', 'work_date',
+        'user_id', 'baan_id', 'company_id', 'baan_name', 'hourly_wage', 'work_date',
         'start_time', 'end_time', 'break_minutes', 'duration_minutes', 'note',
     ];
 
@@ -20,6 +20,7 @@ class HourEntry extends Model
             'hourly_wage' => 'decimal:2',
             'break_minutes' => 'integer',
             'duration_minutes' => 'integer',
+            'company_id' => 'integer',
         ];
     }
 
@@ -31,6 +32,11 @@ class HourEntry extends Model
     public function baan(): BelongsTo
     {
         return $this->belongsTo(Baan::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function earningsCents(): int

@@ -57,6 +57,44 @@ class Company extends Model
         return $this->hasMany(CompanyInvitation::class);
     }
 
+    public function banen(): HasMany
+    {
+        return $this->hasMany(Baan::class);
+    }
+
+    public function ensureBaanFor(User $user, string $hourlyWage = '0.00'): Baan
+    {
+        return Baan::query()->firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'company_id' => $this->id,
+            ],
+            [
+                'name' => $this->name,
+                'hourly_wage' => $hourlyWage,
+            ],
+        );
+    }
+
+    public function removeBaanFor(User $user): void
+    {
+        $baanIds = Baan::query()
+            ->where('user_id', $user->id)
+            ->where('company_id', $this->id)
+            ->pluck('id');
+
+        if ($baanIds->isEmpty()) {
+            return;
+        }
+
+        RunningClock::query()
+            ->where('user_id', $user->id)
+            ->whereIn('baan_id', $baanIds)
+            ->delete();
+
+        Baan::query()->whereIn('id', $baanIds)->delete();
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';

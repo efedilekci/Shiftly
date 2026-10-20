@@ -53,6 +53,8 @@ class InboxController extends Controller
         }
 
         DB::transaction(function () use ($request, $invitation): void {
+            $invitation->loadMissing('company');
+
             CompanyMember::query()->firstOrCreate(
                 [
                     'company_id' => $invitation->company_id,
@@ -62,6 +64,8 @@ class InboxController extends Controller
                     'role' => $invitation->role,
                 ],
             );
+
+            $invitation->company->ensureBaanFor($request->user());
 
             $invitation->forceFill([
                 'accepted_at' => now(),

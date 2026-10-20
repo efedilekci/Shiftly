@@ -28,6 +28,8 @@ class EnsureCompanyMember
             abort(Response::HTTP_FORBIDDEN);
         }
 
+        $company->ensureBaanFor($user);
+
         $request->attributes->set('companyMember', $member);
 
         return $next($request);

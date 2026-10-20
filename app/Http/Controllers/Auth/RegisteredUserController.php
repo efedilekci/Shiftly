@@ -61,6 +61,8 @@ class RegisteredUserController extends Controller
                     'user_id' => $user->id,
                     'role' => CompanyMemberRole::Owner,
                 ]);
+
+                $company->ensureBaanFor($user);
             }
 
             return ['user' => $user, 'company' => $company];
