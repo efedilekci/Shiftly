@@ -39,6 +39,7 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     companies: SharedCompany[];
+    pendingInvitationCount: number;
     flash?: { status?: string | null };
     activeClock: SharedActiveClock | null;
     openClockReminderAfterMinutes: number;

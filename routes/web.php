@@ -10,6 +10,7 @@ use App\Http\Controllers\Company\InvitationController as CompanyInvitationContro
 use App\Http\Controllers\Company\MemberController as CompanyMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HourEntryController;
+use App\Http\Controllers\InboxController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -34,6 +35,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/banen/{baan}', [BaanController::class, 'destroy'])->name('banen.destroy');
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
+    Route::post('/inbox/{invitation}/accepteren', [InboxController::class, 'accept'])->name('inbox.accept');
 
     Route::prefix('bedrijf/{company}')->name('company.')->middleware('company.member')->group(function () {
         Route::get('/', CompanyDashboardController::class)->name('dashboard');

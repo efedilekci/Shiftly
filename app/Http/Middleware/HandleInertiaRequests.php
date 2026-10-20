@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CompanyInvitation;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -54,6 +55,14 @@ class HandleInertiaRequests extends Middleware
                 ->values()
             : collect();
 
+        $pendingInvitationCount = $user
+            ? CompanyInvitation::query()
+                ->where('email', $user->email)
+                ->whereNull('accepted_at')
+                ->where('expires_at', '>', now())
+                ->count()
+            : 0;
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -62,6 +71,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'companies' => $companies,
+            'pendingInvitationCount' => $pendingInvitationCount,
             'flash' => [
                 'status' => $request->session()->get('status'),
             ],

@@ -6,10 +6,11 @@ import { Building2, Users } from 'lucide-react';
 import { useMemo } from 'react';
 
 function NavLink({ item }: { item: NavItem & { exact?: boolean } }) {
-    const page = usePage();
+    const page = usePage<SharedData>();
     const { setOpenMobile } = useSidebar();
     const path = page.url.split('?')[0];
     const active = item.exact ? path === item.url || path === `${item.url}/` : isNavItemActive(page.url, item.url);
+    const badge = item.url === '/inbox' ? page.props.pendingInvitationCount : 0;
 
     return (
         <SidebarMenuItem>
@@ -17,6 +18,11 @@ function NavLink({ item }: { item: NavItem & { exact?: boolean } }) {
                 <Link href={item.url} prefetch onClick={() => setOpenMobile(false)} aria-current={active ? 'page' : undefined}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
+                    {badge > 0 && (
+                        <span className="bg-foreground text-background ml-auto inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums">
+                            {badge}
+                        </span>
+                    )}
                 </Link>
             </SidebarMenuButton>
         </SidebarMenuItem>

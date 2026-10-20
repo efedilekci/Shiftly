@@ -10,7 +10,7 @@ export default function MobileBottomNav() {
             aria-label="Hoofdnavigatie"
             className="border-border bg-background/95 supports-backdrop-filter:bg-background/80 fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur md:hidden"
         >
-            <ul className="mx-auto grid max-w-lg grid-cols-4 px-2 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <ul className="mx-auto grid max-w-lg grid-cols-5 px-2 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                 {mainNavItems.map((item) => {
                     const active = isNavItemActive(url, item.url);
                     const Icon = item.icon;
