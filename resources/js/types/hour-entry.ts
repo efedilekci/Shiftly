@@ -9,4 +9,7 @@ export type HourEntry = {
     duration_minutes: number;
     earnings_cents: number;
     note: string | null;
+    approval_status?: string;
+    approval_status_label?: string;
+    is_company_entry?: boolean;
 };

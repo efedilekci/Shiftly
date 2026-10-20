@@ -34,6 +34,8 @@ export type SharedCompany = {
     role_label: string;
     can_access_company_area?: boolean;
     can_manage_settings?: boolean;
+    can_approve_hours?: boolean;
+    pending_hour_approvals_count?: number;
 };
 
 export interface SharedData {

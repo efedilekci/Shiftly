@@ -44,7 +44,22 @@ const columns = helper.columns([
     helper.accessor('baan_name', {
         header: 'Baan',
         sortFn: 'text',
-        cell: ({ getValue }) => <span className="block max-w-xs min-w-28 [overflow-wrap:anywhere] whitespace-normal">{getValue()}</span>,
+        cell: ({ getValue }) => (
+            <span className="block max-w-[14rem] truncate" title={getValue()}>
+                {getValue()}
+            </span>
+        ),
+    }),
+    helper.accessor((entry) => entry.approval_status_label ?? '', {
+        id: 'approval_status',
+        header: 'Status',
+        sortFn: 'text',
+        cell: ({ row }) =>
+            row.original.is_company_entry ? (
+                <span>{row.original.approval_status_label}</span>
+            ) : (
+                <span className="text-muted-foreground">-</span>
+            ),
     }),
     helper.accessor('start_time', { header: 'Begin', sortFn: 'text' }),
     helper.accessor('end_time', {
@@ -79,7 +94,11 @@ const columns = helper.columns([
             const note = getValue();
             if (!note) return <span className="text-muted-foreground">-</span>;
 
-            return <span className="block max-w-48 [overflow-wrap:anywhere] whitespace-normal">{note}</span>;
+            return (
+                <span className="block max-w-[12rem] truncate" title={note}>
+                    {note}
+                </span>
+            );
         },
     }),
 ]);
@@ -192,17 +211,18 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
             {!invalidRange && (
                 <>
                     <div className="bg-card overflow-hidden rounded-xl border">
-                        <Table aria-label="Mijn uren" className="min-w-[59rem] table-fixed">
+                        <Table aria-label="Mijn uren" className="w-full table-fixed">
                             <colgroup>
-                                <col className="w-32" />
+                                <col className="w-[7.5rem]" />
                                 <col />
-                                <col className="w-24" />
-                                <col className="w-32" />
-                                <col className="w-24" />
-                                <col className="w-28" />
-                                <col className="w-32" />
-                                <col className="w-40" />
-                                <col className="w-28" />
+                                <col className="w-[8.5rem]" />
+                                <col className="w-[5rem]" />
+                                <col className="w-[5.5rem]" />
+                                <col className="w-[5rem]" />
+                                <col className="w-[5.5rem]" />
+                                <col className="w-[7rem]" />
+                                <col className="w-[9rem]" />
+                                <col className="w-[5.5rem]" />
                             </colgroup>
                             <TableHeader>
                                 {table.getHeaderGroups().map((group) => (
@@ -211,6 +231,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                             <TableHead
                                                 key={header.id}
                                                 scope="col"
+                                                className="px-3"
                                                 aria-sort={
                                                     header.column.getIsSorted() === 'asc'
                                                         ? 'ascending'
@@ -219,7 +240,13 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                                           : 'none'
                                                 }
                                             >
-                                                <Button type="button" variant="ghost" size="sm" onClick={header.column.getToggleSortingHandler()}>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 gap-1 px-1.5 text-xs sm:text-sm"
+                                                    onClick={header.column.getToggleSortingHandler()}
+                                                >
                                                     <table.FlexRender header={header} />
                                                     {header.column.getIsSorted() === 'asc' ? (
                                                         <ArrowUp aria-hidden="true" />
@@ -231,7 +258,7 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                                 </Button>
                                             </TableHead>
                                         ))}
-                                        <TableHead scope="col">
+                                        <TableHead scope="col" className="px-2">
                                             <span className="sr-only">Acties</span>
                                         </TableHead>
                                     </TableRow>
@@ -242,11 +269,11 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                     table.getRowModel().rows.map((row) => (
                                         <TableRow key={row.id}>
                                             {row.getAllCells().map((cell) => (
-                                                <TableCell key={cell.id} className="px-5 py-4">
+                                                <TableCell key={cell.id} className="px-3 py-3">
                                                     <table.FlexRender cell={cell} />
                                                 </TableCell>
                                             ))}
-                                            <TableCell className="px-3 py-4 text-right">
+                                            <TableCell className="px-2 py-3 text-right">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <HourEntryDialog entry={row.original} banen={banen} today={today} />
                                                     <DeleteHourEntryDialog entry={row.original} />

@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\HourEntryApprovalStatus;
 use App\Models\CompanyInvitation;
+use App\Models\HourEntry;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -43,17 +45,29 @@ class HandleInertiaRequests extends Middleware
 
         $companies = $user
             ? $user->companyMemberships()
-                ->with('company:id,name,slug')
+                ->with('company:id,name,slug,hour_approval_mode')
                 ->get()
-                ->map(fn ($membership) => [
-                    'id' => $membership->company->id,
-                    'name' => $membership->company->name,
-                    'slug' => $membership->company->slug,
-                    'role' => $membership->role->value,
-                    'role_label' => $membership->role->label(),
-                    'can_access_company_area' => $membership->role->canViewTeamHours(),
-                    'can_manage_settings' => $membership->role->canManageMembers(),
-                ])
+                ->map(function ($membership) {
+                    $company = $membership->company;
+                    $canApproveHours = $company->actorCanApproveHours($membership->role);
+
+                    return [
+                        'id' => $company->id,
+                        'name' => $company->name,
+                        'slug' => $company->slug,
+                        'role' => $membership->role->value,
+                        'role_label' => $membership->role->label(),
+                        'can_access_company_area' => $membership->role->canViewTeamHours(),
+                        'can_manage_settings' => $membership->role->canManageMembers(),
+                        'can_approve_hours' => $canApproveHours,
+                        'pending_hour_approvals_count' => $canApproveHours
+                            ? HourEntry::query()
+                                ->where('company_id', $company->id)
+                                ->where('approval_status', HourEntryApprovalStatus::Pending)
+                                ->count()
+                            : 0,
+                    ];
+                })
                 ->filter(fn (array $company) => $company['can_access_company_area'])
                 ->values()
             : collect();

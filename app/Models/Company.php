@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CompanyHourApprovalMode;
+use App\Enums\CompanyMemberRole;
 use App\Enums\HourEntryApprovalStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +35,11 @@ class Company extends Model
         return $this->hour_approval_mode->requiresApproval()
             ? HourEntryApprovalStatus::Pending
             : HourEntryApprovalStatus::Approved;
+    }
+
+    public function actorCanApproveHours(CompanyMemberRole $role): bool
+    {
+        return $this->hour_approval_mode->canBeApprovedBy($role);
     }
 
     protected static function booted(): void

@@ -31,6 +31,15 @@ enum CompanyHourApprovalMode: string
         return $this !== self::Auto;
     }
 
+    public function canBeApprovedBy(CompanyMemberRole $role): bool
+    {
+        return match ($this) {
+            self::Auto => false,
+            self::TeamLeader => $role === CompanyMemberRole::Owner || $role === CompanyMemberRole::TeamLeader,
+            self::Owner => $role === CompanyMemberRole::Owner,
+        };
+    }
+
     /** @return list<string> */
     public static function values(): array
     {

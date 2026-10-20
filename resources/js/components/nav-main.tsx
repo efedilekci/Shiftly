@@ -2,15 +2,15 @@ import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, Sideba
 import { isNavItemActive } from '@/lib/main-nav';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, Settings, Users } from 'lucide-react';
+import { Building2, Clock3, Settings, Users } from 'lucide-react';
 import { useMemo } from 'react';
 
-function NavLink({ item }: { item: NavItem & { exact?: boolean } }) {
+function NavLink({ item }: { item: NavItem & { exact?: boolean; badge?: number } }) {
     const page = usePage<SharedData>();
     const { setOpenMobile } = useSidebar();
     const path = page.url.split('?')[0];
     const active = item.exact ? path === item.url || path === `${item.url}/` : isNavItemActive(page.url, item.url);
-    const badge = item.url === '/inbox' ? page.props.pendingInvitationCount : 0;
+    const badge = item.badge ?? (item.url === '/inbox' ? page.props.pendingInvitationCount : 0);
 
     return (
         <SidebarMenuItem>
@@ -35,7 +35,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
 
     const companySections = useMemo(() => {
         return companies.map((company) => {
-            const items: Array<NavItem & { exact?: boolean }> = [
+            const items: Array<NavItem & { exact?: boolean; badge?: number }> = [
                 {
                     title: 'Overzicht',
                     url: `/bedrijf/${company.slug}`,
@@ -46,6 +46,12 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                     title: 'Medewerkers',
                     url: `/bedrijf/${company.slug}/medewerkers`,
                     icon: Users,
+                },
+                {
+                    title: 'Uren',
+                    url: `/bedrijf/${company.slug}/uren`,
+                    icon: Clock3,
+                    badge: company.pending_hour_approvals_count ?? 0,
                 },
             ];
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\BaanController;
 use App\Http\Controllers\ClockController;
 use App\Http\Controllers\Company\DashboardController as CompanyDashboardController;
+use App\Http\Controllers\Company\HourEntryController as CompanyHourEntryController;
 use App\Http\Controllers\Company\InvitationController as CompanyInvitationController;
 use App\Http\Controllers\Company\MemberController as CompanyMemberController;
 use App\Http\Controllers\Company\SettingsController as CompanySettingsController;
@@ -44,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('company.staff')->group(function () {
             Route::get('/', CompanyDashboardController::class)->name('dashboard');
             Route::get('/medewerkers', [CompanyMemberController::class, 'index'])->name('members.index');
+            Route::get('/uren', [CompanyHourEntryController::class, 'index'])->name('hours.index');
+            Route::post('/uren/{hourEntry}/goedkeuren', [CompanyHourEntryController::class, 'approve'])->name('hours.approve');
+            Route::post('/uren/{hourEntry}/afwijzen', [CompanyHourEntryController::class, 'reject'])->name('hours.reject');
         });
 
         Route::middleware('company.invite')->group(function () {
