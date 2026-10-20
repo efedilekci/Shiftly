@@ -35,6 +35,22 @@ class HourEntry extends Model
         return $company->initialHourApprovalStatus();
     }
 
+    public function isLockedAfterApproval(): bool
+    {
+        if ($this->company_id === null || $this->approval_status !== HourEntryApprovalStatus::Approved) {
+            return false;
+        }
+
+        $this->loadMissing('company');
+
+        return $this->company?->hour_approval_mode->requiresApproval() ?? false;
+    }
+
+    public function canBeModifiedByEmployee(): bool
+    {
+        return ! $this->isLockedAfterApproval();
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -171,6 +171,68 @@ class CompanyHourApprovalTest extends TestCase
         $this->assertSame(HourEntryApprovalStatus::Pending, $entry->fresh()->approval_status);
     }
 
+    public function test_approved_company_hours_cannot_be_edited_when_approval_is_required(): void
+    {
+        [, $company] = $this->createCompanyWithOwner(CompanyHourApprovalMode::Owner);
+        $employee = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $baan = $company->ensureBaanFor($employee, '15.00');
+        $entry = $this->createEntry($employee, $company, $baan->id, HourEntryApprovalStatus::Approved);
+
+        $this->actingAs($employee)
+            ->put(route('uren.update', $entry), [
+                'baan_id' => $baan->id,
+                'work_date' => now()->toDateString(),
+                'start_time' => '10:00',
+                'end_time' => '12:00',
+                'break_minutes' => 0,
+                'note' => 'Mag niet',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($employee)
+            ->delete(route('uren.destroy', $entry))
+            ->assertForbidden();
+
+        $this->assertSame(HourEntryApprovalStatus::Approved, $entry->fresh()->approval_status);
+        $this->assertSame('09:00:00', $entry->fresh()->start_time);
+    }
+
+    public function test_editing_pending_company_hours_keeps_them_pending_without_resubmit_message(): void
+    {
+        [, $company] = $this->createCompanyWithOwner(CompanyHourApprovalMode::Owner);
+        $employee = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $baan = $company->ensureBaanFor($employee, '15.00');
+        $entry = $this->createEntry($employee, $company, $baan->id, HourEntryApprovalStatus::Pending);
+
+        $this->actingAs($employee)
+            ->put(route('uren.update', $entry), [
+                'baan_id' => $baan->id,
+                'work_date' => now()->toDateString(),
+                'start_time' => '10:00',
+                'end_time' => '12:00',
+                'break_minutes' => 0,
+                'note' => 'Aangepast',
+            ])
+            ->assertRedirect(route('uren.index'))
+            ->assertSessionHas('status', 'Uren bijgewerkt.');
+
+        $this->assertSame(HourEntryApprovalStatus::Pending, $entry->fresh()->approval_status);
+    }
+
     public function test_company_hours_can_be_filtered_by_member_and_date(): void
     {
         [$owner, $company] = $this->createCompanyWithOwner(CompanyHourApprovalMode::TeamLeader);

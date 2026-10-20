@@ -12,7 +12,8 @@ class UpdateHourEntryRequest extends StoreHourEntryRequest
 
         return $entry instanceof HourEntry
             && $this->user() !== null
-            && $entry->user_id === $this->user()->id;
+            && $entry->user_id === $this->user()->id
+            && $entry->canBeModifiedByEmployee();
     }
 
     public function rules(): array

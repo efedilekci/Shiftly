@@ -274,10 +274,14 @@ export default function HoursDataTable({ entries, banen, today }: { entries: Hou
                                                 </TableCell>
                                             ))}
                                             <TableCell className="px-2 py-3 text-right">
-                                                <div className="flex items-center justify-end gap-1">
-                                                    <HourEntryDialog entry={row.original} banen={banen} today={today} />
-                                                    <DeleteHourEntryDialog entry={row.original} />
-                                                </div>
+                                                {row.original.can_edit === false ? (
+                                                    <span className="text-muted-foreground text-xs">Goedgekeurd</span>
+                                                ) : (
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <HourEntryDialog entry={row.original} banen={banen} today={today} />
+                                                        <DeleteHourEntryDialog entry={row.original} />
+                                                    </div>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))

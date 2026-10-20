@@ -17,12 +17,19 @@ class HourEntryController extends Controller
 {
     public function index(Request $request): Response
     {
-        $entries = $request->user()->hourEntries()->orderByDesc('work_date')->orderByDesc('start_time')->orderByDesc('id')
+        $entries = $request->user()->hourEntries()
+            ->with('company:id,hour_approval_mode')
+            ->orderByDesc('work_date')
+            ->orderByDesc('start_time')
+            ->orderByDesc('id')
             ->get();
 
         $editEntryId = $request->integer('edit') ?: null;
-        if ($editEntryId !== null && ! $entries->contains('id', $editEntryId)) {
-            $editEntryId = null;
+        if ($editEntryId !== null) {
+            $editEntry = $entries->firstWhere('id', $editEntryId);
+            if ($editEntry === null || ! $editEntry->canBeModifiedByEmployee()) {
+                $editEntryId = null;
+            }
         }
 
         return Inertia::render('uren/index', [
@@ -40,6 +47,7 @@ class HourEntryController extends Controller
                 'approval_status' => $entry->approval_status->value,
                 'approval_status_label' => $entry->approval_status->label(),
                 'is_company_entry' => $entry->company_id !== null,
+                'can_edit' => $entry->canBeModifiedByEmployee(),
             ]),
             'editEntryId' => $editEntryId,
             'rejectedCompanyHoursCount' => $entries
@@ -77,7 +85,7 @@ class HourEntryController extends Controller
         $data = $request->validated();
         $baanId = isset($data['baan_id']) ? (int) $data['baan_id'] : null;
         $data['baan_id'] = $baanId;
-        $wasRejected = $hourEntry->approval_status === HourEntryApprovalStatus::Rejected;
+        $previousStatus = $hourEntry->approval_status;
 
         if ($baanId !== $hourEntry->baan_id) {
             $baan = $request->user()->banen()->findOrFail($baanId);
@@ -95,21 +103,26 @@ class HourEntryController extends Controller
             'duration_minutes' => HourEntry::grossMinutes($data['start_time'], $data['end_time']) - (int) $data['break_minutes'],
         ]);
 
-        $resubmitted = $wasRejected && $data['approval_status'] === HourEntryApprovalStatus::Pending;
+        $becamePending = $data['approval_status'] === HourEntryApprovalStatus::Pending
+            && $previousStatus !== HourEntryApprovalStatus::Pending;
+        $resubmitted = $previousStatus === HourEntryApprovalStatus::Rejected && $becamePending;
 
-        if ($resubmitted) {
-            HourEntryInboxNotifier::notifyApproversOfPending($hourEntry->fresh(), true);
+        if ($becamePending) {
+            HourEntryInboxNotifier::notifyApproversOfPending($hourEntry->fresh(), $resubmitted);
         }
 
         return to_route('uren.index')->with(
             'status',
-            $resubmitted ? 'Uren opnieuw ingediend ter goedkeuring.' : 'Uren bijgewerkt.',
+            $resubmitted
+                ? 'Uren opnieuw ingediend ter goedkeuring.'
+                : ($becamePending ? 'Uren bijgewerkt en opnieuw ter goedkeuring ingediend.' : 'Uren bijgewerkt.'),
         );
     }
 
     public function destroy(Request $request, HourEntry $hourEntry): RedirectResponse
     {
         abort_unless($hourEntry->user_id === $request->user()->id, 403);
+        abort_unless($hourEntry->canBeModifiedByEmployee(), 403);
 
         $hourEntry->delete();
 

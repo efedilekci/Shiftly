@@ -12,4 +12,5 @@ export type HourEntry = {
     approval_status?: string;
     approval_status_label?: string;
     is_company_entry?: boolean;
+    can_edit?: boolean;
 };
