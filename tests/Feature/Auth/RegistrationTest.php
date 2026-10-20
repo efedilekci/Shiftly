@@ -46,12 +46,12 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
-        $response->assertSessionHas('status');
-
         $user = User::query()->where('email', 'eigenaar@shiftly.test')->firstOrFail();
         $company = Company::query()->where('name', 'Shiftly BV')->firstOrFail();
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('company.dashboard', $company, absolute: false));
+        $response->assertSessionHas('status');
 
         $this->assertSame($user->id, $company->owner_user_id);
         $this->assertDatabaseHas('company_members', [

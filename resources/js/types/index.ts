@@ -26,10 +26,19 @@ export type SharedActiveClock = {
     started_at: number;
 };
 
+export type SharedCompany = {
+    id: number;
+    name: string;
+    slug: string;
+    role: string;
+    role_label: string;
+};
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
+    companies: SharedCompany[];
     flash?: { status?: string | null };
     activeClock: SharedActiveClock | null;
     openClockReminderAfterMinutes: number;

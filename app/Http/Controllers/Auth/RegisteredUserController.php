@@ -71,7 +71,8 @@ class RegisteredUserController extends Controller
         Auth::login($result['user']);
 
         if ($result['company']) {
-            return to_route('dashboard')->with('status', 'Bedrijf '.$result['company']->name.' is aangemaakt.');
+            return to_route('company.dashboard', $result['company'])
+                ->with('status', 'Bedrijf '.$result['company']->name.' is aangemaakt.');
         }
 
         return to_route('dashboard');

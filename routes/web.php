@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\HourEntryController as AdminHourEntryController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\BaanController;
 use App\Http\Controllers\ClockController;
+use App\Http\Controllers\Company\DashboardController as CompanyDashboardController;
+use App\Http\Controllers\Company\MemberController as CompanyMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HourEntryController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +33,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/banen/{baan}', [BaanController::class, 'destroy'])->name('banen.destroy');
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('bedrijf/{company}')->name('company.')->middleware('company.member')->group(function () {
+        Route::get('/', CompanyDashboardController::class)->name('dashboard');
+        Route::get('/medewerkers', [CompanyMemberController::class, 'index'])->name('members.index');
+    });
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

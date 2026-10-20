@@ -40,6 +40,20 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $clock = $user?->runningClock()->first();
 
+        $companies = $user
+            ? $user->companyMemberships()
+                ->with('company:id,name,slug')
+                ->get()
+                ->map(fn ($membership) => [
+                    'id' => $membership->company->id,
+                    'name' => $membership->company->name,
+                    'slug' => $membership->company->slug,
+                    'role' => $membership->role->value,
+                    'role_label' => $membership->role->label(),
+                ])
+                ->values()
+            : collect();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -47,6 +61,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
+            'companies' => $companies,
             'flash' => [
                 'status' => $request->session()->get('status'),
             ],
