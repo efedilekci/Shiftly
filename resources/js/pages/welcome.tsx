@@ -24,9 +24,21 @@ const featureItems: MagicBentoItem[] = [
     },
     {
         label: 'Banen',
-        title: 'Meerdere banen',
-        description: 'Houd uurloon en namen apart per baan bij.',
+        title: 'Persoonlijk en zakelijk',
+        description: 'Eigen banen naast een bedrijfsbaan, elk met eigen uurloon.',
         visual: 'collaboration',
+    },
+    {
+        label: 'Team',
+        title: 'Bedrijf starten',
+        description: 'Maak een team aan, nodig collega\'s uit en werk in hetzelfde overzicht.',
+        visual: 'integration',
+    },
+    {
+        label: 'Goedkeuring',
+        title: 'Uren afstemmen',
+        description: 'Laat uren direct meetellen of keur ze eerst goed als eigenaar of teamleider.',
+        visual: 'security',
     },
     {
         label: 'Inzicht',
@@ -101,7 +113,10 @@ export default function Welcome() {
             {
                 label: 'Ontdekken',
                 description: 'Bekijk wat Shiftly voor je doet.',
-                links: [{ label: 'Functies', href: '#functies' }],
+                links: [
+                    { label: 'Functies', href: '#functies' },
+                    { label: 'Voor teams', href: '#teams' },
+                ],
             },
             {
                 label: 'App',
@@ -123,6 +138,7 @@ export default function Welcome() {
                 links: auth.user
                     ? [
                           { label: 'Banen', href: route('banen.index') },
+                          { label: 'Bedrijf starten', href: route('company.create') },
                           { label: 'Klokinstellingen', href: route('clock-preferences.edit') },
                       ]
                     : [
@@ -203,8 +219,9 @@ export default function Welcome() {
                                 <h1 className="font-display max-w-2xl text-3xl leading-tight font-semibold tracking-tight sm:text-5xl">
                                     Jouw tijd. Helder in beeld.
                                 </h1>
-                                <p className="text-muted-foreground max-w-md text-base leading-relaxed sm:text-lg">
-                                    Houd banen, uren en verdiensten bij, van inklokken tot maandoverzicht.
+                                <p className="text-muted-foreground max-w-lg text-base leading-relaxed sm:text-lg">
+                                    Voor jezelf of met je team: banen, uren en verdiensten op één plek, van inklokken tot
+                                    maandoverzicht en bedrijfsgoedkeuring.
                                 </p>
                             </div>
                             <div className="animate-in fade-in slide-in-from-bottom-3 fill-mode-both delay-200">
@@ -227,7 +244,7 @@ export default function Welcome() {
                                 Alles wat je nodig hebt.
                             </h2>
                             <p className="text-muted-foreground max-w-xl text-base leading-relaxed sm:text-lg">
-                                Van inklokken tot export, gebouwd voor bijbanen en flexwerk.
+                                Van inklokken tot export — voor bijbanen, zzp en kleine teams die samen uren willen bijhouden.
                             </p>
                         </div>
 
@@ -242,6 +259,51 @@ export default function Welcome() {
                             textAutoHide={false}
                             className="w-full"
                         />
+                    </div>
+                </section>
+
+                <section id="teams" className="bg-background relative z-10 scroll-mt-28 border-t">
+                    <div className="mx-auto max-w-6xl px-5 py-20 sm:px-10 sm:py-28">
+                        <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+                            <div className="space-y-4">
+                                <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+                                    Ook voor kleine bedrijven
+                                </h2>
+                                <p className="text-muted-foreground text-base leading-relaxed sm:text-lg">
+                                    Start een bedrijf in Shiftly, nodig medewerkers uit die al een account hebben en houd
+                                    teamuren overzichtelijk. Rollen, goedkeuring en instellingen blijven bij de eigenaar.
+                                </p>
+                            </div>
+                            <ul className="space-y-4 text-sm sm:text-base">
+                                <li className="border-border rounded-xl border px-4 py-3">
+                                    <span className="font-medium">Uitnodigen</span>
+                                    <span className="text-muted-foreground block mt-1">
+                                        Collega&apos;s met een Shiftly-account kunnen direct meedoen via de inbox.
+                                    </span>
+                                </li>
+                                <li className="border-border rounded-xl border px-4 py-3">
+                                    <span className="font-medium">Bedrijfsdashboard</span>
+                                    <span className="text-muted-foreground block mt-1">
+                                        Zie uren van het team, keur registraties goed en exporteer waar nodig.
+                                    </span>
+                                </li>
+                                <li className="border-border rounded-xl border px-4 py-3">
+                                    <span className="font-medium">Eigendom</span>
+                                    <span className="text-muted-foreground block mt-1">
+                                        Draag het bedrijf over of hef het op wanneer je team verandert.
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div className="mt-10">
+                            <Link
+                                href={auth.user ? route('company.create') : route('register')}
+                                className="border-border hover:bg-muted/50 inline-flex min-h-11 items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition-colors"
+                            >
+                                {auth.user ? 'Bedrijf starten' : 'Account aanmaken en team opzetten'}
+                                <ArrowRight size={16} aria-hidden="true" />
+                            </Link>
+                        </div>
                     </div>
                 </section>
 
