@@ -22,7 +22,7 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
-        title: 'Bedrijf',
+        title: 'Bedrijven',
         url: '/bedrijf/starten',
         icon: null,
     },

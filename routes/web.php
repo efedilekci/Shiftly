@@ -50,6 +50,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/bedrijf/starten', [CreateCompanyController::class, 'store'])->name('company.store');
 
     Route::prefix('bedrijf/{company}')->name('company.')->middleware('company.member')->group(function () {
+        Route::delete('/verlaten', [CreateCompanyController::class, 'leave'])->name('leave');
+
         Route::middleware('company.staff')->group(function () {
             Route::get('/', CompanyDashboardController::class)->name('dashboard');
             Route::get('/medewerkers', [CompanyMemberController::class, 'index'])->name('members.index');

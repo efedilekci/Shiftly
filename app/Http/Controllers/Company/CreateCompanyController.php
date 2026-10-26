@@ -14,9 +14,28 @@ use Inertia\Response;
 
 class CreateCompanyController extends Controller
 {
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('company/create');
+        $memberships = $request->user()
+            ->companyMemberships()
+            ->with('company:id,name,slug')
+            ->get()
+            ->sortBy(fn (CompanyMember $membership) => $membership->company?->name ?? '')
+            ->values()
+            ->map(fn (CompanyMember $membership) => [
+                'id' => $membership->id,
+                'company_id' => $membership->company_id,
+                'name' => $membership->company?->name ?? 'Onbekend',
+                'slug' => $membership->company?->slug,
+                'role' => $membership->role->value,
+                'role_label' => $membership->role->label(),
+                'can_leave' => $membership->role !== CompanyMemberRole::Owner,
+            ]);
+
+        return Inertia::render('company/create', [
+            'memberships' => $memberships,
+            'status' => $request->session()->get('status'),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,5 +68,24 @@ class CreateCompanyController extends Controller
 
         return to_route('company.dashboard', $company)
             ->with('status', 'Bedrijf '.$company->name.' is aangemaakt.');
+    }
+
+    public function leave(Request $request, Company $company): RedirectResponse
+    {
+        /** @var CompanyMember $membership */
+        $membership = $request->attributes->get('companyMember');
+
+        if ($membership->role === CompanyMemberRole::Owner) {
+            return back()->withErrors([
+                'company' => 'Als eigenaar kun je het bedrijf niet verlaten.',
+            ]);
+        }
+
+        $user = $request->user();
+        $membership->delete();
+        $company->removeBaanFor($user);
+
+        return to_route('company.create')
+            ->with('status', 'Je hebt '.$company->name.' verlaten. Oude uren blijven bewaard.');
     }
 }

@@ -25,7 +25,9 @@ class CreateCompanyTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('company.create'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('company/create'));
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('company/create')
+                ->has('memberships', 0));
     }
 
     public function test_authenticated_users_can_start_a_company(): void
