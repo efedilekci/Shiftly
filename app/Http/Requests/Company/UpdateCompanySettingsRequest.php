@@ -17,6 +17,7 @@ class UpdateCompanySettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name' => ['required', 'string', 'max:255'],
             'hour_approval_mode' => ['required', 'string', Rule::in(CompanyHourApprovalMode::values())],
         ];
     }
@@ -25,6 +26,8 @@ class UpdateCompanySettingsRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.required' => 'Vul een bedrijfsnaam in.',
+            'name.max' => 'De bedrijfsnaam mag maximaal 255 tekens zijn.',
             'hour_approval_mode.required' => 'Kies hoe bedrijfsuren worden goedgekeurd.',
             'hour_approval_mode.in' => 'Kies een geldige goedkeuringsoptie.',
         ];

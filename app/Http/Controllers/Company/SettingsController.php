@@ -34,9 +34,14 @@ class SettingsController extends Controller
 
     public function update(UpdateCompanySettingsRequest $request, Company $company): RedirectResponse
     {
+        $data = $request->validated();
+
         $company->forceFill([
-            'hour_approval_mode' => $request->validated('hour_approval_mode'),
+            'name' => $data['name'],
+            'hour_approval_mode' => $data['hour_approval_mode'],
         ])->save();
+
+        $company->banen()->update(['name' => $company->name]);
 
         return back()->with('status', 'Bedrijfsinstellingen opgeslagen.');
     }

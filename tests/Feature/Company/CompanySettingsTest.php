@@ -22,12 +22,48 @@ class CompanySettingsTest extends TestCase
 
         $this->actingAs($owner)
             ->put(route('company.settings.update', $company), [
+                'name' => $company->name,
                 'hour_approval_mode' => CompanyHourApprovalMode::TeamLeader->value,
             ])
             ->assertRedirect()
             ->assertSessionHas('status');
 
         $this->assertSame(CompanyHourApprovalMode::TeamLeader, $company->fresh()->hour_approval_mode);
+    }
+
+    public function test_owner_can_rename_the_company(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner();
+        $originalSlug = $company->slug;
+        $baan = $company->ensureBaanFor($owner, '18.00');
+
+        $this->actingAs($owner)
+            ->put(route('company.settings.update', $company), [
+                'name' => 'Nieuwe Naam BV',
+                'hour_approval_mode' => CompanyHourApprovalMode::Auto->value,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('status');
+
+        $company->refresh();
+
+        $this->assertSame('Nieuwe Naam BV', $company->name);
+        $this->assertSame($originalSlug, $company->slug);
+        $this->assertSame('Nieuwe Naam BV', $baan->fresh()->name);
+    }
+
+    public function test_company_name_is_required_when_updating_settings(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner();
+
+        $this->actingAs($owner)
+            ->put(route('company.settings.update', $company), [
+                'name' => '',
+                'hour_approval_mode' => CompanyHourApprovalMode::Auto->value,
+            ])
+            ->assertSessionHasErrors('name');
+
+        $this->assertNotSame('', $company->fresh()->name);
     }
 
     public function test_team_leader_cannot_update_settings(): void
@@ -47,6 +83,7 @@ class CompanySettingsTest extends TestCase
 
         $this->actingAs($teamLeader)
             ->put(route('company.settings.update', $company), [
+                'name' => $company->name,
                 'hour_approval_mode' => CompanyHourApprovalMode::Owner->value,
             ])
             ->assertForbidden();

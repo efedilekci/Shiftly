@@ -1,5 +1,6 @@
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -28,6 +29,7 @@ export default function CompanySettings({
 }) {
     const { flash } = usePage().props as { flash?: { status?: string | null } };
     const { data, setData, put, errors, processing } = useForm({
+        name: company.name,
         hour_approval_mode: company.hour_approval_mode,
     });
 
@@ -47,7 +49,7 @@ export default function CompanySettings({
             <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-8 sm:p-10">
                 <header className="space-y-2">
                     <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Bedrijfsinstellingen</h1>
-                    <p className="text-muted-foreground text-sm">Stel in hoe uren bij {company.name} werken.</p>
+                    <p className="text-muted-foreground text-sm">Beheer de naam en urengoedkeuring van {company.name}.</p>
                 </header>
 
                 {flash?.status && (
@@ -57,6 +59,20 @@ export default function CompanySettings({
                 )}
 
                 <form onSubmit={submit} className="space-y-6" aria-busy={processing}>
+                    <div className="grid gap-2">
+                        <Label htmlFor="company-name">Bedrijfsnaam</Label>
+                        <Input
+                            id="company-name"
+                            type="text"
+                            required
+                            value={data.name}
+                            onChange={(event) => setData('name', event.target.value)}
+                            disabled={processing}
+                            aria-invalid={!!errors.name}
+                        />
+                        <InputError message={errors.name} />
+                    </div>
+
                     <fieldset className="space-y-4">
                         <legend className="font-display text-xl font-semibold tracking-tight">Urengoedkeuring</legend>
                         <p className="text-muted-foreground text-sm">
