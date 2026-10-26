@@ -31,12 +31,13 @@ Tests gebruiken een tijdelijke SQLite-database in het geheugen. De applicatie ge
 - [x] MySQL-configuratie voorbereiden
 - [x] Registreren, inloggen en een afgeschermd dashboard via de startbasis
 - [x] Lokale MySQL-verbinding en migraties controleren
-- [ ] Eigen vormgeving en mobiele navigatie
-- [ ] Banen met uurloon beheren
-- [ ] Uren invoeren, wijzigen en verwijderen
-- [ ] Pauzes en nachtdiensten berekenen
-- [ ] Dashboard met filters en verdiensten
-- [ ] In- en uitklokken
+- [x] Eigen vormgeving en mobiele navigatie
+- [x] Banen met uurloon beheren
+- [x] Uren invoeren, wijzigen en verwijderen
+- [x] Pauzes en nachtdiensten berekenen
+- [x] Dashboard met filters en verdiensten
+- [x] In- en uitklokken
+- [x] Bedrijven: team, uitnodigingen, goedkeuring en instellingen
 - [ ] Screenshots, automatische controles en online demo
 
 We bouwen één onderdeel per sessie en maken commits voor afgeronde wijzigingen op de werkelijke werkdatum.
