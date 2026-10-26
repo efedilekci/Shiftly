@@ -1,3 +1,4 @@
+import DestroyCompanyDialog from '@/components/company/destroy-company-dialog';
 import TransferOwnershipDialog from '@/components/company/transfer-ownership-dialog';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -137,6 +138,15 @@ export default function CompanySettings({
                     ) : (
                         <TransferOwnershipDialog companySlug={company.slug} candidates={transferCandidates} />
                     )}
+                </section>
+
+                <section className="space-y-3 border-t pt-8">
+                    <h2 className="font-display text-xl font-semibold tracking-tight text-destructive">Gevarenzone</h2>
+                    <p className="text-muted-foreground text-sm">
+                        Heef het bedrijf op als je het niet meer gebruikt. Alle leden verliezen toegang; uren blijven bij de
+                        medewerkers bewaard.
+                    </p>
+                    <DestroyCompanyDialog companySlug={company.slug} companyName={company.name} />
                 </section>
             </div>
         </AppLayout>

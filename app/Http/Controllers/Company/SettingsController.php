@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Company;
 use App\Enums\CompanyHourApprovalMode;
 use App\Enums\CompanyMemberRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Company\DestroyCompanyRequest;
 use App\Http\Requests\Company\TransferCompanyOwnershipRequest;
 use App\Http\Requests\Company\UpdateCompanySettingsRequest;
 use App\Models\Company;
 use App\Models\CompanyMember;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -86,5 +88,27 @@ class SettingsController extends Controller
 
         return to_route('company.dashboard', $company)
             ->with('status', 'Eigendom overgedragen aan '.$newOwnerMembership->user?->name.'. Je bent nu teamleider.');
+    }
+
+    public function destroy(DestroyCompanyRequest $request, Company $company): RedirectResponse
+    {
+        $companyName = $company->name;
+
+        DB::transaction(function () use ($company): void {
+            $userIds = $company->members()->pluck('user_id');
+
+            foreach ($userIds as $userId) {
+                $user = User::query()->find($userId);
+
+                if ($user !== null) {
+                    $company->removeBaanFor($user);
+                }
+            }
+
+            $company->delete();
+        });
+
+        return to_route('company.create')
+            ->with('status', 'Bedrijf '.$companyName.' is opgeheven. Oude uren blijven bewaard.');
     }
 }
