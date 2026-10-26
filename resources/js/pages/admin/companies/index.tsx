@@ -70,19 +70,30 @@ export default function AdminCompaniesIndex({ companies }: { companies: AdminCom
                                 <TableHead className="text-right">Leden</TableHead>
                                 <TableHead>Goedkeuring</TableHead>
                                 <TableHead>Aangemaakt</TableHead>
+                                <TableHead className="w-28 text-right">
+                                    <span className="sr-only">Acties</span>
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredCompanies.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
+                                    <TableCell colSpan={6} className="text-muted-foreground h-24 text-center">
                                         {companies.length === 0 ? 'Nog geen bedrijven.' : 'Geen bedrijven gevonden.'}
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 filteredCompanies.map((company) => (
                                     <TableRow key={company.id}>
-                                        <TableCell className="font-medium">{company.name}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <Link
+                                                href={route('admin.companies.show', company.slug)}
+                                                prefetch
+                                                className="text-foreground underline underline-offset-4"
+                                            >
+                                                {company.name}
+                                            </Link>
+                                        </TableCell>
                                         <TableCell>
                                             <Link
                                                 href={route('admin.users.show', company.owner_id)}
@@ -102,6 +113,15 @@ export default function AdminCompaniesIndex({ companies }: { companies: AdminCom
                                             {company.hour_approval_mode_label}
                                         </TableCell>
                                         <TableCell className="tabular-nums">{formatDate(company.created_at)}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Link
+                                                href={route('admin.companies.show', company.slug)}
+                                                prefetch
+                                                className="text-sm underline underline-offset-4"
+                                            >
+                                                Bekijken
+                                            </Link>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}

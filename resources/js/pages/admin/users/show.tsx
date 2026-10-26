@@ -185,7 +185,18 @@ export default function AdminUserShow({
                                 ) : (
                                     companies.map((membership) => (
                                         <TableRow key={membership.id}>
-                                            <TableCell className="font-medium">{membership.name}</TableCell>
+                                            <TableCell className="font-medium">
+                                                {membership.slug ? (
+                                                    <Link
+                                                        href={route('admin.companies.show', membership.slug)}
+                                                        className="underline underline-offset-4"
+                                                    >
+                                                        {membership.name}
+                                                    </Link>
+                                                ) : (
+                                                    membership.name
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 {membership.role_label}
                                                 {membership.is_owner ? ' · Eigenaaraccount' : ''}

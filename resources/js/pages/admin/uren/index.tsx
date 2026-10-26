@@ -165,8 +165,13 @@ export default function AdminUrenIndex({
                                             )}
                                         </TableCell>
                                         <TableCell className="max-w-xs [overflow-wrap:anywhere] whitespace-normal">
-                                            {entry.company_name ? (
-                                                entry.company_name
+                                            {entry.company_slug && entry.company_name ? (
+                                                <Link
+                                                    href={route('admin.companies.show', entry.company_slug)}
+                                                    className="underline underline-offset-4"
+                                                >
+                                                    {entry.company_name}
+                                                </Link>
                                             ) : (
                                                 <span className="text-muted-foreground">Persoonlijk</span>
                                             )}

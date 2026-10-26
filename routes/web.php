@@ -74,6 +74,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/', AdminDashboardController::class)->name('dashboard');
     Route::get('/uren', [AdminHourEntryController::class, 'index'])->name('uren.index');
     Route::get('/bedrijven', [AdminCompanyController::class, 'index'])->name('companies.index');
+    Route::get('/bedrijven/{company}', [AdminCompanyController::class, 'show'])->name('companies.show');
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
