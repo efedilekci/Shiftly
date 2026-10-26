@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('company.owner')->group(function () {
             Route::get('/instellingen', [CompanySettingsController::class, 'edit'])->name('settings.edit');
             Route::put('/instellingen', [CompanySettingsController::class, 'update'])->name('settings.update');
+            Route::patch('/instellingen/eigendom', [CompanySettingsController::class, 'transferOwnership'])->name('settings.transfer-ownership');
             Route::get('/medewerkers/{member}', [CompanyMemberController::class, 'edit'])->name('members.edit');
             Route::put('/medewerkers/{member}', [CompanyMemberController::class, 'update'])->name('members.update');
             Route::patch('/medewerkers/{member}/rol', [CompanyMemberController::class, 'updateRole'])->name('members.role');

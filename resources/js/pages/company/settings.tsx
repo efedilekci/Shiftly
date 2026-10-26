@@ -1,3 +1,4 @@
+import TransferOwnershipDialog from '@/components/company/transfer-ownership-dialog';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,12 +21,21 @@ type HourApprovalMode = {
     description: string;
 };
 
+type TransferCandidate = {
+    id: number;
+    name: string;
+    email: string | null;
+    role_label: string;
+};
+
 export default function CompanySettings({
     company,
     hourApprovalModes,
+    transferCandidates,
 }: {
     company: Company;
     hourApprovalModes: HourApprovalMode[];
+    transferCandidates: TransferCandidate[];
 }) {
     const { flash } = usePage().props as { flash?: { status?: string | null } };
     const { data, setData, put, errors, processing } = useForm({
@@ -115,6 +125,19 @@ export default function CompanySettings({
                         {processing ? 'Opslaan...' : 'Opslaan'}
                     </Button>
                 </form>
+
+                <section className="space-y-3 border-t pt-8">
+                    <h2 className="font-display text-xl font-semibold tracking-tight">Eigendom</h2>
+                    <p className="text-muted-foreground text-sm">
+                        Draag het bedrijf over aan een andere medewerker. Je blijft teamleider en kunt daarna het
+                        bedrijf verlaten.
+                    </p>
+                    {transferCandidates.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">Nodig eerst een medewerker uit voordat je eigendom kunt overdragen.</p>
+                    ) : (
+                        <TransferOwnershipDialog companySlug={company.slug} candidates={transferCandidates} />
+                    )}
+                </section>
             </div>
         </AppLayout>
     );

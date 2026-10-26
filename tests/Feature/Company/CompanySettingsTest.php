@@ -52,6 +52,71 @@ class CompanySettingsTest extends TestCase
         $this->assertSame('Nieuwe Naam BV', $baan->fresh()->name);
     }
 
+    public function test_owner_can_transfer_ownership_to_another_member(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner();
+        $employee = User::factory()->create(['name' => 'Nieuwe Eigenaar']);
+        $employeeMembership = CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('company.settings.transfer-ownership', $company), [
+                'member_id' => $employeeMembership->id,
+            ])
+            ->assertRedirect(route('company.dashboard', $company, absolute: false))
+            ->assertSessionHas('status');
+
+        $company->refresh();
+        $ownerMembership = $owner->membershipFor($company);
+        $employeeMembership->refresh();
+
+        $this->assertSame($employee->id, $company->owner_user_id);
+        $this->assertSame(CompanyMemberRole::TeamLeader, $ownerMembership?->role);
+        $this->assertSame(CompanyMemberRole::Owner, $employeeMembership->role);
+    }
+
+    public function test_owner_cannot_transfer_ownership_to_themselves(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner();
+        $ownerMembership = $owner->membershipFor($company);
+
+        $this->actingAs($owner)
+            ->patch(route('company.settings.transfer-ownership', $company), [
+                'member_id' => $ownerMembership?->id,
+            ])
+            ->assertSessionHasErrors('member_id');
+
+        $this->assertSame($owner->id, $company->fresh()->owner_user_id);
+    }
+
+    public function test_team_leader_cannot_transfer_ownership(): void
+    {
+        [, $company] = $this->createCompanyWithOwner();
+        $teamLeader = User::factory()->create();
+        $employee = User::factory()->create();
+
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $teamLeader->id,
+            'role' => CompanyMemberRole::TeamLeader,
+        ]);
+
+        $employeeMembership = CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $employee->id,
+            'role' => CompanyMemberRole::Employee,
+        ]);
+
+        $this->actingAs($teamLeader)
+            ->patch(route('company.settings.transfer-ownership', $company), [
+                'member_id' => $employeeMembership->id,
+            ])
+            ->assertForbidden();
+    }
+
     public function test_company_name_is_required_when_updating_settings(): void
     {
         [$owner, $company] = $this->createCompanyWithOwner();
