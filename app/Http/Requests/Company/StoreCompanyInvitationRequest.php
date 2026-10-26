@@ -41,7 +41,13 @@ class StoreCompanyInvitationRequest extends FormRequest
 
                     $existingUser = User::query()->where('email', $value)->first();
 
-                    if ($existingUser && CompanyMember::query()
+                    if (! $existingUser) {
+                        $fail('Er is geen Shiftly-account met dit e-mailadres.');
+
+                        return;
+                    }
+
+                    if (CompanyMember::query()
                         ->where('company_id', $company->id)
                         ->where('user_id', $existingUser->id)
                         ->exists()) {

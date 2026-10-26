@@ -20,6 +20,7 @@ class CompanyInvitationTest extends TestCase
         Notification::fake();
 
         [$owner, $company] = $this->createCompanyWithOwner();
+        User::factory()->create(['email' => 'medewerker@shiftly.test']);
 
         $this->actingAs($owner)
             ->post(route('company.invitations.store', $company), [
@@ -37,6 +38,23 @@ class CompanyInvitationTest extends TestCase
         ]);
 
         Notification::assertNothingSent();
+    }
+
+    public function test_invitation_requires_an_existing_shiftly_account(): void
+    {
+        [$owner, $company] = $this->createCompanyWithOwner();
+
+        $this->actingAs($owner)
+            ->post(route('company.invitations.store', $company), [
+                'email' => 'onbekend@shiftly.test',
+                'role' => CompanyMemberRole::Employee->value,
+            ])
+            ->assertSessionHasErrors('email');
+
+        $this->assertDatabaseMissing('company_invitations', [
+            'company_id' => $company->id,
+            'email' => 'onbekend@shiftly.test',
+        ]);
     }
 
     public function test_owner_can_revoke_an_invitation(): void
@@ -64,6 +82,8 @@ class CompanyInvitationTest extends TestCase
     {
         [, $company] = $this->createCompanyWithOwner();
         $teamLeader = User::factory()->create();
+        User::factory()->create(['email' => 'medewerker@shiftly.test']);
+        User::factory()->create(['email' => 'leider@shiftly.test']);
 
         CompanyMember::factory()->create([
             'company_id' => $company->id,
@@ -97,6 +117,7 @@ class CompanyInvitationTest extends TestCase
     {
         [, $company] = $this->createCompanyWithOwner();
         $employee = User::factory()->create();
+        User::factory()->create(['email' => 'iemand@shiftly.test']);
 
         CompanyMember::factory()->create([
             'company_id' => $company->id,

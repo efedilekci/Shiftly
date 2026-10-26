@@ -80,7 +80,7 @@ export default function InviteMemberDialog({
                 <DialogHeader>
                     <DialogTitle>Medewerker uitnodigen</DialogTitle>
                     <DialogDescription>
-                        Zoek op e-mailadres. De uitnodiging verschijnt in de inbox van dat account op Shiftly.
+                        Nodig iemand uit met een bestaand Shiftly-account. De uitnodiging verschijnt in hun inbox.
                     </DialogDescription>
                 </DialogHeader>
 
