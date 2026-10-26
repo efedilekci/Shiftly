@@ -1,9 +1,11 @@
 import { isNavItemActive, mainNavItems } from '@/lib/main-nav';
 import { cn } from '@/lib/utils';
+import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
 export default function MobileBottomNav() {
-    const { url } = usePage();
+    const { url, props } = usePage<SharedData>();
+    const inboxBadge = props.pendingInboxCount ?? props.pendingInvitationCount ?? 0;
 
     return (
         <nav
@@ -14,6 +16,7 @@ export default function MobileBottomNav() {
                 {mainNavItems.map((item) => {
                     const active = isNavItemActive(url, item.url);
                     const Icon = item.icon;
+                    const badge = item.url === '/inbox' ? inboxBadge : 0;
 
                     return (
                         <li key={item.title}>
@@ -27,7 +30,14 @@ export default function MobileBottomNav() {
                                 )}
                             >
                                 {active ? <span aria-hidden className="bg-foreground absolute top-1 h-0.5 w-4 rounded-full" /> : null}
-                                {Icon && <Icon className="size-5" aria-hidden />}
+                                <span className="relative">
+                                    {Icon && <Icon className="size-5" aria-hidden />}
+                                    {badge > 0 && (
+                                        <span className="bg-foreground text-background absolute -top-1.5 -right-2 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-semibold tabular-nums leading-4">
+                                            {badge}
+                                        </span>
+                                    )}
+                                </span>
                                 <span className={cn(active && 'font-display font-semibold')}>{item.title}</span>
                             </Link>
                         </li>
