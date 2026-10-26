@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\HourEntry;
 use App\Models\RunningClock;
 use App\Models\User;
@@ -45,6 +46,7 @@ class DashboardController extends Controller
             'month' => now()->format('Y-m'),
             'stats' => [
                 'users_count' => User::query()->count(),
+                'companies_count' => Company::query()->count(),
                 'month_entry_count' => $monthEntries->count(),
                 'month_minutes' => (int) $monthEntries->sum('duration_minutes'),
                 'month_earnings_cents' => (int) $monthEntries->sum(fn (HourEntry $entry) => $entry->earningsCents()),

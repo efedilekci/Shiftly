@@ -84,7 +84,7 @@ export default function AdminUrenIndex({
                                 id={`${fieldId}-search`}
                                 value={filters.search}
                                 onChange={(event) => setFilters({ ...filters, search: event.target.value })}
-                                placeholder="Naam, baan of notitie..."
+                                placeholder="Naam, baan, bedrijf of notitie..."
                             />
                         </div>
                     </div>
@@ -126,6 +126,8 @@ export default function AdminUrenIndex({
                                 <TableHead>Datum</TableHead>
                                 <TableHead>Gebruiker</TableHead>
                                 <TableHead>Baan</TableHead>
+                                <TableHead>Bedrijf</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead>Tijd</TableHead>
                                 <TableHead className="text-right">Gewerkt</TableHead>
                                 <TableHead className="text-right">Verdiensten</TableHead>
@@ -134,7 +136,7 @@ export default function AdminUrenIndex({
                         <TableBody>
                             {filteredEntries.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-muted-foreground h-24 text-center">
+                                    <TableCell colSpan={8} className="text-muted-foreground h-24 text-center">
                                         {entries.length === 0
                                             ? 'Nog geen urenregistraties.'
                                             : invalidRange
@@ -162,6 +164,14 @@ export default function AdminUrenIndex({
                                                 </span>
                                             )}
                                         </TableCell>
+                                        <TableCell className="max-w-xs [overflow-wrap:anywhere] whitespace-normal">
+                                            {entry.company_name ? (
+                                                entry.company_name
+                                            ) : (
+                                                <span className="text-muted-foreground">Persoonlijk</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>{entry.approval_status_label}</TableCell>
                                         <TableCell className="tabular-nums">
                                             {entry.start_time}–{entry.end_time}
                                             {entry.end_time < entry.start_time && (

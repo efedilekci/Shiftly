@@ -62,6 +62,19 @@ class UserController extends Controller
                     'name' => $baan->name,
                     'hourly_wage' => $baan->hourly_wage,
                 ]),
+            'companies' => $user->companyMemberships()
+                ->with('company:id,name,slug,owner_user_id')
+                ->get()
+                ->sortBy(fn ($membership) => $membership->company?->name ?? '')
+                ->values()
+                ->map(fn ($membership) => [
+                    'id' => $membership->company_id,
+                    'name' => $membership->company?->name ?? 'Onbekend',
+                    'slug' => $membership->company?->slug,
+                    'role' => $membership->role->value,
+                    'role_label' => $membership->role->label(),
+                    'is_owner' => $membership->company?->owner_user_id === $user->id,
+                ]),
             'recent_entries' => $entries
                 ->take(5)
                 ->map(fn (HourEntry $entry) => [

@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\CompanyMemberRole;
 use App\Enums\Role;
+use App\Models\Company;
+use App\Models\CompanyMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -35,6 +38,16 @@ class UserShowTest extends TestCase
         $target = User::factory()->create(['name' => 'Bert User', 'email' => 'bert@example.com']);
         $baan = $target->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.50']);
 
+        $company = Company::factory()->create([
+            'name' => 'Bert BV',
+            'owner_user_id' => $target->id,
+        ]);
+        CompanyMember::factory()->owner()->create([
+            'company_id' => $company->id,
+            'user_id' => $target->id,
+            'role' => CompanyMemberRole::Owner,
+        ]);
+
         $this->actingAs($target)->post('/uren', [
             'baan_id' => $baan->id,
             'work_date' => '2026-10-19',
@@ -57,6 +70,10 @@ class UserShowTest extends TestCase
                 ->where('stats.total_earnings_cents', 11625)
                 ->has('banen', 1)
                 ->where('banen.0.name', 'Winkel')
+                ->has('companies', 1)
+                ->where('companies.0.name', 'Bert BV')
+                ->where('companies.0.role', CompanyMemberRole::Owner->value)
+                ->where('companies.0.is_owner', true)
                 ->has('recent_entries', 1)
                 ->where('recent_entries.0.baan_name', 'Winkel')
                 ->where('recent_entries.0.duration_minutes', 450)

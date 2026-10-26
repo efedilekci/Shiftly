@@ -58,6 +58,8 @@ class HourEntryIndexTest extends TestCase
                 ->where('entries.0.user_name', 'Sara Bakker')
                 ->where('entries.0.baan_name', 'Winkel')
                 ->where('entries.0.note', 'Maandag')
+                ->where('entries.0.company_name', null)
+                ->where('entries.0.approval_status', 'approved')
                 ->where('entries.1.user_name', 'Tom Jansen')
                 ->has('users', 3)
                 ->where('users', fn ($users) => collect($users)->pluck('name')->sort()->values()->all() === collect([

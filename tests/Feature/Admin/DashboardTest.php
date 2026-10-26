@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Company;
+use App\Models\CompanyMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -29,6 +31,15 @@ class DashboardTest extends TestCase
         $sara = User::factory()->create(['name' => 'Sara Bakker']);
         User::factory()->create();
 
+        $company = Company::factory()->create([
+            'name' => 'Demo BV',
+            'owner_user_id' => $sara->id,
+        ]);
+        CompanyMember::factory()->owner()->create([
+            'company_id' => $company->id,
+            'user_id' => $sara->id,
+        ]);
+
         $baan = $sara->banen()->create(['name' => 'Winkel', 'hourly_wage' => '15.50']);
         $this->actingAs($sara)->post('/uren', [
             'baan_id' => $baan->id,
@@ -52,6 +63,7 @@ class DashboardTest extends TestCase
                 ->component('admin/dashboard')
                 ->where('month', now()->format('Y-m'))
                 ->where('stats.users_count', 3)
+                ->where('stats.companies_count', 1)
                 ->where('stats.month_entry_count', 1)
                 ->where('stats.month_minutes', 450)
                 ->where('stats.month_earnings_cents', 11625)

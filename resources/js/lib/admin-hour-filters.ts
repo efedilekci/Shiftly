@@ -3,6 +3,11 @@ export type AdminHourEntryRow = {
     user_id: number;
     user_name: string;
     baan_name: string;
+    company_id: number | null;
+    company_name: string | null;
+    company_slug: string | null;
+    approval_status: string;
+    approval_status_label: string;
     work_date: string;
     start_time: string;
     end_time: string;
@@ -32,6 +37,8 @@ export function filterAdminHourEntries(entries: AdminHourEntryRow[], filters: Ad
               return (
                   entry.user_name.toLocaleLowerCase('nl-NL').includes(search) ||
                   entry.baan_name.toLocaleLowerCase('nl-NL').includes(search) ||
+                  (entry.company_name?.toLocaleLowerCase('nl-NL').includes(search) ?? false) ||
+                  entry.approval_status_label.toLocaleLowerCase('nl-NL').includes(search) ||
                   (entry.note?.toLocaleLowerCase('nl-NL').includes(search) ?? false)
               );
           });

@@ -6,6 +6,7 @@ import type { PropsWithChildren } from 'react';
 const adminNav = [
     { title: 'Overzicht', href: '/admin', routeName: 'admin.dashboard' },
     { title: 'Uren', href: '/admin/uren', routeName: 'admin.uren.index' },
+    { title: 'Bedrijven', href: '/admin/bedrijven', routeName: 'admin.companies.index' },
     { title: 'Gebruikers', href: '/admin/users', routeName: 'admin.users.index' },
 ] as const;
 

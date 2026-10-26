@@ -26,6 +26,15 @@ type BaanRow = {
     hourly_wage: string;
 };
 
+type CompanyMembership = {
+    id: number;
+    name: string;
+    slug: string | null;
+    role: string;
+    role_label: string;
+    is_owner: boolean;
+};
+
 type RecentEntry = {
     id: number;
     baan_name: string;
@@ -60,6 +69,7 @@ export default function AdminUserShow({
     user,
     stats,
     banen,
+    companies,
     recent_entries,
     can_delete,
     delete_blocked_reason,
@@ -67,6 +77,7 @@ export default function AdminUserShow({
     user: AdminUser;
     stats: Stats;
     banen: BaanRow[];
+    companies: CompanyMembership[];
     recent_entries: RecentEntry[];
     can_delete: boolean;
     delete_blocked_reason: string | null;
@@ -145,6 +156,39 @@ export default function AdminUserShow({
                                             <TableCell className="font-medium">{baan.name}</TableCell>
                                             <TableCell className="text-right tabular-nums">
                                                 {currency.format(Number(baan.hourly_wage))}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </section>
+
+                <section className="space-y-3">
+                    <h2 className="font-display text-xl font-semibold tracking-tight">Bedrijven</h2>
+                    <div className="bg-card overflow-hidden rounded-xl border">
+                        <Table aria-label="Bedrijfslidmaatschappen">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Bedrijf</TableHead>
+                                    <TableHead>Rol</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {companies.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={2} className="text-muted-foreground h-20 text-center">
+                                            Geen bedrijfslidmaatschappen.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    companies.map((membership) => (
+                                        <TableRow key={membership.id}>
+                                            <TableCell className="font-medium">{membership.name}</TableCell>
+                                            <TableCell>
+                                                {membership.role_label}
+                                                {membership.is_owner ? ' · Eigenaaraccount' : ''}
                                             </TableCell>
                                         </TableRow>
                                     ))

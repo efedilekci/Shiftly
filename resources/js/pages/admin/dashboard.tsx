@@ -7,6 +7,7 @@ const dateFormat = new Intl.DateTimeFormat('nl-NL', { day: '2-digit', month: '2-
 
 type Stats = {
     users_count: number;
+    companies_count: number;
     month_entry_count: number;
     month_minutes: number;
     month_earnings_cents: number;
@@ -60,9 +61,10 @@ export default function AdminDashboard({
                     <p className="text-muted-foreground text-sm">Platformcijfers voor {monthLabel}.</p>
                 </header>
 
-                <section aria-label="Samenvatting" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                <section aria-label="Samenvatting" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     {[
                         { label: 'Gebruikers', value: String(stats.users_count) },
+                        { label: 'Bedrijven', value: String(stats.companies_count) },
                         { label: 'Registraties', value: String(stats.month_entry_count) },
                         { label: 'Gewerkt', value: formatDuration(stats.month_minutes) },
                         { label: 'Verdiensten', value: currency.format(stats.month_earnings_cents / 100) },
