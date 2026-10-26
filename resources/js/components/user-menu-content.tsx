@@ -44,6 +44,20 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                         </Link>
                     </DropdownMenuItem>
                 ))}
+                {companies.length === 0 && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full"
+                            href={route('company.create')}
+                            as="button"
+                            prefetch
+                            onClick={cleanup}
+                        >
+                            <Building2 className="mr-2" />
+                            Bedrijf starten
+                        </Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                     <Link className="block w-full" href={route('profile.edit')} as="button" prefetch onClick={cleanup}>
                         <Settings className="mr-2" />

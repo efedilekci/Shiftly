@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\HourEntryController as AdminHourEntryController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\BaanController;
 use App\Http\Controllers\ClockController;
+use App\Http\Controllers\Company\CreateCompanyController;
 use App\Http\Controllers\Company\DashboardController as CompanyDashboardController;
 use App\Http\Controllers\Company\HourEntryController as CompanyHourEntryController;
 use App\Http\Controllers\Company\InvitationController as CompanyInvitationController;
@@ -44,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/inbox/{invitation}/weigeren', [InboxController::class, 'decline'])->name('inbox.decline');
     Route::post('/inbox/meldingen/alles-gelezen', [InboxController::class, 'markAllRead'])->name('inbox.messages.read-all');
     Route::post('/inbox/meldingen/{message}/gelezen', [InboxController::class, 'markRead'])->name('inbox.messages.read');
+
+    Route::get('/bedrijf/starten', [CreateCompanyController::class, 'create'])->name('company.create');
+    Route::post('/bedrijf/starten', [CreateCompanyController::class, 'store'])->name('company.store');
 
     Route::prefix('bedrijf/{company}')->name('company.')->middleware('company.member')->group(function () {
         Route::middleware('company.staff')->group(function () {

@@ -22,6 +22,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Bedrijf',
+        url: '/bedrijf/starten',
+        icon: null,
+    },
+    {
         title: 'Weergave',
         url: '/settings/appearance',
         icon: null,
